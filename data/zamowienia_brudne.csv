@@ -1,0 +1,307 @@
+id_zamowienia;data_zamowienia;miasto;kod_pocztowy;produkt;ilosc;kwota_brutto;email_klienta
+ZAM-0179;24.01.2025;Warszawa;00-950;Ekspres przelewowy;4;1 396,00;klient20@example.pl
+ZAM-0150;2025-06-23;£ódŸ;90-001;M³ynek do kawy;2;319,00;klient90@example.pl
+ZAM-0100;10.07.2025;Gdañsk;80-001;  Filtry papierowe;4;51,96;klient72@example.pl
+ZAM-0005;05.07.2025;Kraków;30-001;  Kubek termiczny;1;64,90;klient38@example.pl
+ZAM-0204;29.07.2025;£ódŸ;90-001;Kawa ziarnista 1 kg;4;359,96;klient54@example.pl
+ZAM-0036;09.04.2025;Wroc³aw;50-001;  Ekspres przelewowy;2;698,00;klient45@example.pl
+ZAM-0168;17.02.2025;Gdañsk;80-001;Ekspres przelewowy;3;1 047,00;klient85@example.pl
+ZAM-0111;31.05.2025;£ódŸ;90-001;  Filtry papierowe;3;38,97;klient110@example.pl
+ZAM-0065;05.04.2025;Warszawa;00-950;M³ynek do kawy;1;159,50;klient98@example.pl
+ZAM-0067;26.05.2025;Lodz;90-001;Kubek termiczny;1;64,90;klient111@example.pl
+ZAM-0195;09.04.2025;Poznañ;60-001;M³ynek do kawy;3;478,50;klient66@example.pl
+ZAM-0180;13.06.2025;£ódŸ;90-001;Ekspres przelewowy;3;1 047,00;klient44@example.pl
+ZAM-0190;12.03.2025;Kraków;30-001;Kubek termiczny;1;64,90;klient120@example.pl
+ZAM-0283;09.02.2025;Gdañsk;80-001;  Filtry papierowe;1;12,99;klient22@example.pl
+ZAM-0110;16.08.2025;Wroc³aw;50-001;Kawa ziarnista 1 kg;4;359,96;klient36@example.pl
+ZAM-0231;12.08.2025;Poznañ;60-001;Kawa ziarnista 1 kg;3;269,97;klient77@example.pl
+ZAM-0152;31.08.2025;Gdañsk;80-001;Filtry papierowe;4;51,96;klient100@example.pl
+ZAM-0132;13/08/2025;Gdañsk;80-001;Kawa ziarnista 1 kg;2;179,98;klient118@example.pl
+ZAM-0221;30.06.2025;Wroc³aw;50-001;Kubek termiczny;4;259,60;klient70@example.pl
+ZAM-0174;23.03.2025;Warszawa;00-950;M³ynek do kawy;3;478,50;klient3@example.pl
+ZAM-0154;23.09.2025;Warszawa;00-950;Kubek termiczny;4;259,60;klient106@example.pl
+ZAM-0040;17.06.2025;Poznañ;60-001;M³ynek do kawy;3;478,50;klient49@example.pl
+ZAM-0107;26.02.2025;;00-950;  Ekspres przelewowy;3;1 047,00;klient31@example.pl
+ZAM-0002;16.09.2025;£ódŸ;90-001;Kawa ziarnista 1 kg;1;89,99;klient54@example.pl
+ZAM-0293;2025-07-21;Gdañsk;80-001;M³ynek do kawy;3;478,50;klient10@example.pl
+ZAM-0072;26.04.2025;Gdañsk;80-001;Filtry papierowe;2;25,98;klient22@example.pl
+ZAM-0129;29.08.2025;Poznañ;60-001;M³ynek do kawy;2;319,00;klient65@example.pl
+ZAM-0048;01.05.2025;Gdañsk;80-001;Kubek termiczny;1;64,90;klient30@example.pl
+ZAM-0133;2025-01-27;Gdañsk;80-001;  Kubek termiczny;4;259,60;klient87@example.pl
+ZAM-0176;25.02.2025;Poznañ;60-001;Kubek termiczny;3;194,70;klient47@example.pl
+ZAM-0059;05.07.2025;Kraków;30-001;Kubek termiczny;1;64,90;klient94@example.pl
+ZAM-0156;30.06.2025;Poznañ;60-001;Kubek termiczny;3;194,70;klient8@example.pl
+ZAM-0185;09/04/2025;£ódŸ;90-001;M³ynek do kawy;3;478,50;klient39@example.pl
+ZAM-0230;19.07.2025;Wroc³aw;50-001;M³ynek do kawy;2;319,00;klient102@example.pl
+ZAM-0118;16.01.2025;krakow;30-001;Filtry papierowe;4;51,96;klient21@example.pl
+ZAM-0069;14.07.2025;Kraków;30-001;Kubek termiczny;2;129,80;klient40@example.pl
+ZAM-0228;22.01.2025;Wroc³aw;50-001;M³ynek do kawy;1;159,50;klient35@example.pl
+ZAM-0149;2025-07-02;Wroclaw;50-001;M³ynek do kawy;3;478,50;klient99@example.pl
+ZAM-0241;2025-05-30;Lodz;90-001;Kubek termiczny;2;129,80;klient87@example.pl
+ZAM-0175;21.04.2025;Kraków;30-001;Filtry papierowe;4;51,96;klient108@example.pl
+ZAM-0277;07.02.2025;Wroc³aw;50-001;Ekspres przelewowy;4;brak;klient8@example.pl
+ZAM-0227;13.07.2025;Kraków;30-001;  Kawa ziarnista 1 kg;1;89,99;klient64@example.pl
+ZAM-0291;2025-04-29;Warszawa;00-950;M³ynek do kawy;1;159,50;klient96@example.pl
+ZAM-0244;23.01.2025;Warszawa;00-950;M³ynek do kawy;2;319,00;klient43@example.pl
+ZAM-0214;2025-08-19;Gdañsk;80-001;Ekspres przelewowy;3;1 047,00;klient35@example.pl
+ZAM-0050;30.06.2025;£ódŸ;90-001;Kawa ziarnista 1 kg;4;359,96;klient69@example.pl
+ZAM-0117;17.05.2025;£ódŸ;90-001;Filtry papierowe;1;12,99;klient45@example.pl
+ZAM-0240;2025-05-24;Poznañ;60-001;Kubek termiczny;2;129,80;klient76@example.pl
+ZAM-0276;07/01/2025;Krakow ;30-001;Filtry papierowe;1;12,99;klient73@example.pl
+ZAM-0189;03.05.2025;Poznañ;60-001;M³ynek do kawy;2;319,00;klient7@example.pl
+ZAM-0095;08.04.2025;Warszawa;00-950;Filtry papierowe;3;38,97;klient108@example.pl
+ZAM-0201;18.03.2025;Kraków;30-001;Filtry papierowe;2;25,98;klient92@example.pl
+ZAM-0131;07.04.2025;Wroc³aw;50-001;Filtry papierowe;1;12,99;klient14@example.pl
+ZAM-0220;06.05.2025;Wroclaw;50-001;M³ynek do kawy;2;319,00;klient106@example.pl
+ZAM-0017;11.07.2025;Poznañ;60-001;Ekspres przelewowy;3;1 047,00;klient44@example.pl
+ZAM-0213;30.01.2025;Warszawa;00-950;M³ynek do kawy;2;319,00;klient32@example.pl
+ZAM-0152;31.08.2025;Gdañsk;80-001;Filtry papierowe;4;51,96;klient100@example.pl
+ZAM-0186;28.06.2025;Gdañsk;80-001;Ekspres przelewowy;4;1 396,00;klient74@example.pl
+ZAM-0081;30.05.2025;Poznañ;60-001;Ekspres przelewowy;4;1 396,00;klient32@example.pl
+ZAM-0202;21.08.2025;£ódŸ;90-001;Filtry papierowe;4;51,96;klient87@example.pl
+ZAM-0109;24.09.2025;Lodz;90-001;  Filtry papierowe;1;12,99;klient109@example.pl
+ZAM-0008;2025-01-17;Warszawa;00-950;  M³ynek do kawy;1;159,50;klient73@example.pl
+ZAM-0075;31.03.2025;Poznañ;60-001;M³ynek do kawy;1;159,50;klient75@example.pl
+ZAM-0160;02.03.2025;Kraków;30-001;Kubek termiczny;4;259,60;klient37@example.pl
+ZAM-0011;05.08.2025;Kraków;30-001;Ekspres przelewowy;2;698,00;klient33@example.pl
+ZAM-0256;16.09.2025;Warszawa;00-950;Ekspres przelewowy;4;1 396,00;klient57@example.pl
+ZAM-0298;13.02.2025;Warszawa;00-950;Ekspres przelewowy;4;brak;klient9@example.pl
+ZAM-0210;14.06.2025;Poznañ;60-001;Filtry papierowe;3;38,97;klient53@example.pl
+ZAM-0247;2025-08-22;Poznañ;60-001;Ekspres przelewowy;3;1 047,00;klient93@example.pl
+ZAM-0159;12.03.2025;Gdañsk;80-001;M³ynek do kawy;4;638,00;klient15@example.pl
+ZAM-0134;14/03/2025;Wroclaw;50-001;M³ynek do kawy;1;159,50;klient17@example.pl
+ZAM-0141;27.01.2025;Warszawa;00-950;Filtry papierowe;2;25,98;klient109@example.pl
+ZAM-0138;20.03.2025;Gdañsk;80-001;Filtry papierowe;2;25,98;klient22@example.pl
+ZAM-0198;15/09/2025;Kraków;30-001;Kubek termiczny;3;194,70;klient82@example.pl
+ZAM-0055;20.03.2025;Kraków;30-001;Ekspres przelewowy;2;698,00;klient60@example.pl
+ZAM-0166;2025-01-29;£ódŸ;90-001;Ekspres przelewowy;2;698,00;klient120@example.pl
+ZAM-0172;2025-03-08;Gdañsk;80-001;M³ynek do kawy;3;478,50;klient16@example.pl
+ZAM-0104;08.07.2025;Wroc³aw;50-001;Ekspres przelewowy;3;1 047,00;klient25@example.pl
+ZAM-0161;07.02.2025;Poznañ;60-001;Kubek termiczny;2;129,80;klient88@example.pl
+ZAM-0063;09.01.2025;Warszawa;00-950;Kubek termiczny;4;259,60;klient75@example.pl
+ZAM-0252;28.02.2025;£ódŸ;90-001;M³ynek do kawy;4;638,00;klient91@example.pl
+ZAM-0074;14.01.2025;Wroclaw;50-001;Kubek termiczny;3;194,70;klient3@example.pl
+ZAM-0051;20.05.2025;;60-001;Filtry papierowe;2;25,98;klient52@example.pl
+ZAM-0143;01.08.2025;Warszawa;00-950;Kubek termiczny;3;194,70;klient48@example.pl
+ZAM-0098;28/08/2025;Wroc³aw;50-001;M³ynek do kawy;3;478,50;klient93@example.pl
+ZAM-0031;07.08.2025;Warszawa;00-950;M³ynek do kawy;2;319,00;klient20@example.pl
+ZAM-0039;05/02/2025;Kraków;30-001;Filtry papierowe;2;25,98;klient16@example.pl
+ZAM-0260;08.08.2025;Warszawa;00-950;Ekspres przelewowy;3;1 047,00;klient8@example.pl
+ZAM-0162;2025-05-29;Gdañsk;80-001;M³ynek do kawy;1;159,50;klient82@example.pl
+ZAM-0269;18.02.2025;Poznañ;60-001;Ekspres przelewowy;4;1 396,00;klient88@example.pl
+ZAM-0070;17.04.2025;£ódŸ;90-001;  Filtry papierowe;1;12,99;klient71@example.pl
+ZAM-0142;20.05.2025;£ódŸ;90-001;M³ynek do kawy;1;159,50;klient117@example.pl
+ZAM-0136;08.06.2025;³ódŸ;90-001;Filtry papierowe;3;38,97;klient29@example.pl
+ZAM-0053;14.07.2025;Warszawa;00-950;Kubek termiczny;2;129,80;klient36@example.pl
+ZAM-0025;01.05.2025;Warszawa;00-950;Kawa ziarnista 1 kg;1;89,99;klient6@example.pl
+ZAM-0286;09.02.2025;Warszawa;00-950;Kubek termiczny;3;194,70;klient29@example.pl
+ZAM-0140;14.08.2025;³ódŸ;90-001;Ekspres przelewowy;3;1 047,00;klient21@example.pl
+ZAM-0191;31/01/2025;Wroc³aw;50-001;Ekspres przelewowy;3;1 047,00;klient93@example.pl
+ZAM-0007;06.05.2025;Poznañ;60-001;Kawa ziarnista 1 kg;2;179,98;klient72@example.pl
+ZAM-0130;27.05.2025;Kraków;30-001;Kubek termiczny;1;64,90;klient65@example.pl
+ZAM-0105;11.01.2025;Kraków;30-001;Kubek termiczny;1;64,90;klient27@example.pl
+ZAM-0203;2025-01-02;Gdañsk;80-001;  Kawa ziarnista 1 kg;4;359,96;klient9@example.pl
+ZAM-0119;2025-02-13;Gdañsk;80-001;M³ynek do kawy;3;brak;klient11@example.pl
+ZAM-0084;13.07.2025;Warszawa;00-950;Kubek termiczny;4;259,60;klient74@example.pl
+ZAM-0056;2025-02-28;Poznañ;60-001;M³ynek do kawy;3;478,50;klient119@example.pl
+ZAM-0004;2025-07-03;Gdañsk;80-001;Kawa ziarnista 1 kg;1;89,99;klient69@example.pl
+ZAM-0262;2025-03-06;KRAKÓW;30-001;Kawa ziarnista 1 kg;3;269,97;klient32@example.pl
+ZAM-0062;22/09/2025;Gdañsk;80-001;Filtry papierowe;3;38,97;klient98@example.pl
+ZAM-0192;01/04/2025;;30-001;Ekspres przelewowy;4;1 396,00;klient24@example.pl
+ZAM-0077;11.06.2025;Wroclaw;50-001;Filtry papierowe;1;12,99;klient106@example.pl
+ZAM-0273;05.03.2025;Warszawa;00-950;Kawa ziarnista 1 kg;1;89,99;klient18@example.pl
+ZAM-0012;2025-05-17;£ódŸ;90-001;Kawa ziarnista 1 kg;1;89,99;klient1@example.pl
+ZAM-0300;07.08.2025;Poznañ;60-001;Kubek termiczny;4;259,60;klient114@example.pl
+ZAM-0121;07.06.2025;Gdañsk;80-001;Filtry papierowe;4;brak;klient39@example.pl
+ZAM-0212;29.07.2025;Poznañ;60-001;Kubek termiczny;3;194,70;klient109@example.pl
+ZAM-0021;04.04.2025;krakow;30-001;Filtry papierowe;4;51,96;klient111@example.pl
+ZAM-0253;10.06.2025;Gdañsk;80-001;Filtry papierowe;1;12,99;klient66@example.pl
+ZAM-0114;18.06.2025;Gdañsk;80-001;Ekspres przelewowy;1;349,00;klient55@example.pl
+ZAM-0022;06.09.2025;Lodz;90-001;Kawa ziarnista 1 kg;2;179,98;klient1@example.pl
+ZAM-0044;16.07.2025;Wroc³aw;50-001;Filtry papierowe;2;brak;klient97@example.pl
+ZAM-0254;07.09.2025;Wroc³aw;50-001;Ekspres przelewowy;4;1 396,00;klient72@example.pl
+ZAM-0211;31.03.2025;Gdañsk;80-001;M³ynek do kawy;1;159,50;klient83@example.pl
+ZAM-0261;30.05.2025;£ódŸ;90-001;M³ynek do kawy;2;319,00;klient87@example.pl
+ZAM-0229;11.06.2025;Kraków;30-001;M³ynek do kawy;1;159,50;klient106@example.pl
+ZAM-0200;11.02.2025;£ódŸ;90-001;Filtry papierowe;2;25,98;klient15@example.pl
+ZAM-0153;08.07.2025;Kraków;30-001;M³ynek do kawy;3;478,50;klient44@example.pl
+ZAM-0219;2025-04-24;;00-950;M³ynek do kawy;3;478,50;klient93@example.pl
+ZAM-0173;26.01.2025;Gdañsk;80-001;Kubek termiczny;2;129,80;klient111@example.pl
+ZAM-0211;31.03.2025;Gdañsk;80-001;M³ynek do kawy;1;159,50;klient83@example.pl
+ZAM-0116;23.05.2025;Kraków;30-001;Filtry papierowe;3;38,97;klient105@example.pl
+ZAM-0042;28.03.2025;Wroc³aw;50-001;Ekspres przelewowy;4;1 396,00;klient12@example.pl
+ZAM-0187;2025-07-22;Poznañ;60-001;Filtry papierowe;4;51,96;klient37@example.pl
+ZAM-0235;15.02.2025;Wroc³aw;50-001;Filtry papierowe;4;51,96;klient50@example.pl
+ZAM-0205;13.07.2025;Gdañsk;80-001;Kubek termiczny;4;259,60;klient84@example.pl
+ZAM-0268;10.07.2025;Gdañsk;80-001;  Kawa ziarnista 1 kg;3;269,97;klient93@example.pl
+ZAM-0148;27.09.2025;Poznañ;60-001;Kawa ziarnista 1 kg;3;brak;klient112@example.pl
+ZAM-0183;14.08.2025;Wroclaw;50-001;Kawa ziarnista 1 kg;1;89,99;klient100@example.pl
+ZAM-0248;2025-01-23;Poznañ;60-001;Kubek termiczny;3;194,70;klient87@example.pl
+ZAM-0106;30.04.2025;Kraków;30-001;Filtry papierowe;2;brak;klient110@example.pl
+ZAM-0169;2025-01-22;;90-001;  Filtry papierowe;3;38,97;klient74@example.pl
+ZAM-0108;04.08.2025;£ódŸ;90-001;Ekspres przelewowy;3;1 047,00;klient66@example.pl
+ZAM-0266;2025-09-06;Gdañsk;80-001;M³ynek do kawy;2;brak;klient81@example.pl
+ZAM-0099;22.07.2025;Poznañ;60-001;Kubek termiczny;3;194,70;klient87@example.pl
+ZAM-0013;2025-02-24;Poznañ;60-001;M³ynek do kawy;2;319,00;klient20@example.pl
+ZAM-0209;2025-04-22;Warszawa;00-950;Kawa ziarnista 1 kg;4;359,96;klient30@example.pl
+ZAM-0028;04.06.2025;Gdañsk;80-001;M³ynek do kawy;2;brak;klient105@example.pl
+ZAM-0066;04.07.2025;;90-001;Kawa ziarnista 1 kg;2;179,98;klient7@example.pl
+ZAM-0090;16.03.2025;krakow;30-001;M³ynek do kawy;3;478,50;klient23@example.pl
+ZAM-0018;31.01.2025;Kraków;30-001;Ekspres przelewowy;400;139 600,00;klient31@example.pl
+ZAM-0064;19.06.2025;Gdañsk;80-001;Kubek termiczny;3;194,70;klient93@example.pl
+ZAM-0054;27/01/2025;Wroclaw;50-001;Kubek termiczny;1;64,90;klient84@example.pl
+ZAM-0068;28.01.2025;Wroclaw;50-001;Kubek termiczny;4;259,60;klient32@example.pl
+ZAM-0003;2025-01-04;Warszawa;00-950;Kubek termiczny;3;194,70;klient28@example.pl
+ZAM-0115;30.06.2025;Poznañ;60-001;Kawa ziarnista 1 kg;3;269,97;klient109@example.pl
+ZAM-0086;14.08.2025;Krakow ;30-001;  M³ynek do kawy;1;159,50;klient112@example.pl
+ZAM-0023;07.09.2025;Wroclaw;50-001;M³ynek do kawy;4;638,00;klient70@example.pl
+ZAM-0043;17.03.2025;Warszawa;00-950;M³ynek do kawy;2;319,00;klient10@example.pl
+ZAM-0251;06.04.2025;Poznañ;60-001;Kawa ziarnista 1 kg;1;89,99;klient63@example.pl
+ZAM-0263;18.05.2025;Poznañ;60-001;  Kubek termiczny;4;259,60;klient99@example.pl
+ZAM-0061;2025-09-11;Warszawa;00-950;Kubek termiczny;4;259,60;klient44@example.pl
+ZAM-0020;28.01.2025;Wroc³aw;50-001;  Kubek termiczny;4;259,60;klient44@example.pl
+ZAM-0233;07.02.2025;£ódŸ;90-001;Kawa ziarnista 1 kg;3;269,97;klient95@example.pl
+ZAM-0216;08/04/2025;Gdañsk;80-001;M³ynek do kawy;1;159,50;klient32@example.pl
+ZAM-0296;02.07.2025;KRAKÓW;30-001;Ekspres przelewowy;1;349,00;klient23@example.pl
+ZAM-0027;20.04.2025;Krakow ;30-001;Filtry papierowe;1;12,99;klient32@example.pl
+ZAM-0255;2025-06-11;Warszawa;00-950;Kubek termiczny;3;194,70;klient63@example.pl
+ZAM-0077;11.06.2025;Wroclaw;50-001;Filtry papierowe;1;12,99;klient106@example.pl
+ZAM-0238;04/01/2025;Warszawa;00-950;Kubek termiczny;1;64,90;klient43@example.pl
+ZAM-0157;23/03/2025;Kraków;30-001;Kubek termiczny;3;194,70;klient5@example.pl
+ZAM-0194;27.02.2025;Wroc³aw;50-001;Ekspres przelewowy;4;1 396,00;klient2@example.pl
+ZAM-0239;13.04.2025;Wroc³aw;50-001;Filtry papierowe;2;25,98;klient95@example.pl
+ZAM-0047;2025-05-07;Wroc³aw;50-001;Kubek termiczny;4;259,60;klient31@example.pl
+ZAM-0009;2025-07-22;Poznañ;60-001;M³ynek do kawy;2;319,00;klient96@example.pl
+ZAM-0146;25.01.2025;£ódŸ;90-001;M³ynek do kawy;2;319,00;klient108@example.pl
+ZAM-0101;26/08/2025;Gdañsk;80-001;Filtry papierowe;2;25,98;klient5@example.pl
+ZAM-0147;30.05.2025;Wroc³aw;50-001;Kawa ziarnista 1 kg;2;179,98;klient86@example.pl
+ZAM-0234;07.06.2025;Wroc³aw;50-001;Kawa ziarnista 1 kg;400;35 996,00;klient56@example.pl
+ZAM-0250;12.04.2025;Warszawa;00-950;  Kubek termiczny;4;259,60;klient36@example.pl
+ZAM-0033;2025-07-01;Gdañsk;80-001;Ekspres przelewowy;2;698,00;klient20@example.pl
+ZAM-0076;29.07.2025;Wroc³aw;50-001;Kubek termiczny;1;64,90;klient89@example.pl
+ZAM-0288;05.05.2025;Warszawa;00-950;M³ynek do kawy;3;478,50;klient26@example.pl
+ZAM-0079;2025-08-13;Warszawa;00-950;  M³ynek do kawy;2;319,00;klient103@example.pl
+ZAM-0097;07.07.2025;Poznañ;60-001;Kubek termiczny;2;129,80;klient106@example.pl
+ZAM-0193;24/02/2025;Poznañ;60-001;M³ynek do kawy;400;63 800,00;klient68@example.pl
+ZAM-0225;19.02.2025;£ódŸ;90-001;Kubek termiczny;2;129,80;klient46@example.pl
+ZAM-0171;31.01.2025;Warszawa;00-950;Kubek termiczny;3;194,70;klient19@example.pl
+ZAM-0058;22.01.2025;Gdañsk;80-001;Filtry papierowe;1;12,99;klient44@example.pl
+ZAM-0092;26/06/2025;Wroc³aw;50-001;Filtry papierowe;2;25,98;klient59@example.pl
+ZAM-0232;19.08.2025;Wroc³aw;50-001;M³ynek do kawy;1;159,50;klient88@example.pl
+ZAM-0178;19.02.2025;Poznañ;60-001;Filtry papierowe;1;12,99;klient97@example.pl
+ZAM-0278;25.07.2025;Wroc³aw;50-001;Filtry papierowe;4;51,96;klient40@example.pl
+ZAM-0264;07.09.2025;;30-001;M³ynek do kawy;3;478,50;klient94@example.pl
+ZAM-0245;23.09.2025;Wroclaw;50-001;M³ynek do kawy;2;319,00;klient60@example.pl
+ZAM-0275;01.06.2025;Warszawa;00-950;Filtry papierowe;2;25,98;klient50@example.pl
+ZAM-0167;2025-09-23;Poznañ;60-001;Ekspres przelewowy;3;1 047,00;klient71@example.pl
+ZAM-0125;05.05.2025;Gdañsk;80-001;  Kawa ziarnista 1 kg;4;359,96;klient96@example.pl
+ZAM-0281;2025-03-12;Poznañ;60-001;Ekspres przelewowy;1;349,00;klient101@example.pl
+ZAM-0112;27.04.2025;Poznañ;60-001;Filtry papierowe;2;25,98;klient41@example.pl
+ZAM-0188;2025-05-12;Poznañ;60-001;Kawa ziarnista 1 kg;3;269,97;klient72@example.pl
+ZAM-0041;01.01.2025;Poznañ;60-001;Ekspres przelewowy;3;1 047,00;klient42@example.pl
+ZAM-0035;25.02.2025;;60-001;Ekspres przelewowy;3;1 047,00;klient118@example.pl
+ZAM-0222;08/02/2025;Poznañ;60-001;Kawa ziarnista 1 kg;1;89,99;klient108@example.pl
+ZAM-0078;07.04.2025;Kraków;30-001;Filtry papierowe;4;51,96;klient7@example.pl
+ZAM-0087;16.05.2025;Poznañ;60-001;Ekspres przelewowy;1;349,00;klient110@example.pl
+ZAM-0026;10.06.2025;³ódŸ;90-001;M³ynek do kawy;2;319,00;klient41@example.pl
+ZAM-0218;12.09.2025;Gdañsk;80-001;M³ynek do kawy;3;478,50;klient41@example.pl
+ZAM-0102;11.03.2025;Gdañsk;80-001;Kubek termiczny;1;64,90;klient70@example.pl
+ZAM-0170;16.01.2025;Gdañsk;80-001;Ekspres przelewowy;4;1 396,00;klient62@example.pl
+ZAM-0224;30.07.2025;£ódŸ;90-001;Kubek termiczny;400;25 960,00;klient3@example.pl
+ZAM-0096;14.08.2025;Warszawa;00-950;Kawa ziarnista 1 kg;1;89,99;klient42@example.pl
+ZAM-0019;31.08.2025;Gdañsk;80-001;Kubek termiczny;2;129,80;klient85@example.pl
+ZAM-0094;26/01/2025;Kraków;30-001;Kubek termiczny;400;25 960,00;klient100@example.pl
+ZAM-0236;28.03.2025;KRAKÓW;30-001;Kawa ziarnista 1 kg;2;179,98;klient19@example.pl
+ZAM-0267;08.08.2025;Wroclaw;50-001;Kubek termiczny;400;25 960,00;klient21@example.pl
+ZAM-0265;23.07.2025;Wroc³aw;50-001;M³ynek do kawy;1;159,50;klient107@example.pl
+ZAM-0037;19/06/2025;Poznañ;60-001;Filtry papierowe;4;51,96;klient34@example.pl
+ZAM-0257;26.04.2025;Wroclaw;50-001;Ekspres przelewowy;3;1 047,00;klient99@example.pl
+ZAM-0151;23.08.2025;Wroc³aw;50-001;Ekspres przelewowy;1;349,00;klient41@example.pl
+ZAM-0038;19.09.2025;KRAKÓW;30-001;M³ynek do kawy;3;brak;klient56@example.pl
+ZAM-0237;09.02.2025;KRAKÓW;30-001;Kubek termiczny;3;194,70;klient79@example.pl
+ZAM-0290;07.06.2025;Gdañsk;80-001;Kawa ziarnista 1 kg;4;359,96;klient8@example.pl
+ZAM-0083;2025-05-25;Wroc³aw;50-001;Filtry papierowe;3;38,97;klient111@example.pl
+ZAM-0223;05.01.2025;Poznañ;60-001;  Ekspres przelewowy;1;349,00;klient120@example.pl
+ZAM-0217;03.05.2025;Poznañ;60-001;Filtry papierowe;2;25,98;klient46@example.pl
+ZAM-0206;21.07.2025;Gdañsk;80-001;Kawa ziarnista 1 kg;2;brak;klient3@example.pl
+ZAM-0046;15.08.2025;Wroc³aw;50-001;Filtry papierowe;3;38,97;klient71@example.pl
+ZAM-0259;2025-06-28;Wroclaw;50-001;M³ynek do kawy;1;159,50;klient104@example.pl
+ZAM-0088;2025-09-07;;60-001;  Filtry papierowe;4;51,96;klient118@example.pl
+ZAM-0034;13.01.2025;Warszawa;00-950;Ekspres przelewowy;2;698,00;klient86@example.pl
+ZAM-0207;28.04.2025;Gdañsk;80-001;Kubek termiczny;4;259,60;klient93@example.pl
+ZAM-0271;10.03.2025;Gdañsk;80-001;  M³ynek do kawy;2;319,00;klient79@example.pl
+ZAM-0158;07.07.2025;Warszawa;00-950;  Kawa ziarnista 1 kg;2;179,98;klient58@example.pl
+ZAM-0085;15.07.2025;Wroclaw;50-001;Kawa ziarnista 1 kg;3;269,97;klient64@example.pl
+ZAM-0001;06.05.2025;Poznañ;60-001;Kawa ziarnista 1 kg;1;89,99;klient12@example.pl
+ZAM-0123;22.01.2025;Warszawa;00-950;  Filtry papierowe;3;38,97;klient55@example.pl
+ZAM-0135;2025-06-18;£ódŸ;90-001;Kawa ziarnista 1 kg;3;269,97;klient88@example.pl
+ZAM-0006;06.07.2025;Kraków;30-001;Kawa ziarnista 1 kg;4;359,96;klient88@example.pl
+ZAM-0057;12.04.2025;Gdañsk;80-001;Filtry papierowe;4;51,96;klient99@example.pl
+ZAM-0155;10.02.2025;Warszawa;00-950;Filtry papierowe;3;38,97;klient22@example.pl
+ZAM-0060;18.05.2025;£ódŸ;90-001;M³ynek do kawy;4;638,00;klient58@example.pl
+ZAM-0287;2025-05-25;£ódŸ;90-001;  Kubek termiczny;1;64,90;klient48@example.pl
+ZAM-0024;15/09/2025;Kraków;30-001;  Kawa ziarnista 1 kg;1;89,99;klient109@example.pl
+ZAM-0294;26.03.2025;Warszawa;00-950;Ekspres przelewowy;1;349,00;klient99@example.pl
+ZAM-0126;09.02.2025;Gdañsk;80-001;Ekspres przelewowy;3;1 047,00;klient45@example.pl
+ZAM-0126;09.02.2025;Gdañsk;80-001;Ekspres przelewowy;3;1 047,00;klient45@example.pl
+ZAM-0080;28.07.2025;Warszawa;00-950;Ekspres przelewowy;3;1 047,00;klient16@example.pl
+ZAM-0284;01.03.2025;Gdañsk;80-001;  Ekspres przelewowy;3;1 047,00;klient32@example.pl
+ZAM-0297;2025-02-22;Kraków;30-001;  Kubek termiczny;2;129,80;klient29@example.pl
+ZAM-0289;29.07.2025;Poznañ;60-001;Filtry papierowe;2;25,98;klient2@example.pl
+ZAM-0226;27.07.2025;Gdañsk;80-001;Kubek termiczny;1;64,90;klient106@example.pl
+ZAM-0208;04.02.2025;;30-001;Kubek termiczny;1;64,90;klient7@example.pl
+ZAM-0299;19.06.2025;Warszawa;00-950;  Kubek termiczny;2;129,80;klient56@example.pl
+ZAM-0049;19.06.2025;Wroc³aw;50-001;Ekspres przelewowy;1;349,00;klient116@example.pl
+ZAM-0243;2025-07-04;£ódŸ;90-001;Kubek termiczny;1;64,90;klient14@example.pl
+ZAM-0145;10.02.2025;Warszawa;00-950;Kubek termiczny;4;259,60;klient78@example.pl
+ZAM-0073;28.08.2025;Gdañsk;80-001;Filtry papierowe;3;38,97;klient64@example.pl
+ZAM-0181;03.06.2025;;90-001;Filtry papierowe;4;51,96;klient54@example.pl
+ZAM-0015;10.02.2025;Warszawa;00-950;  Kawa ziarnista 1 kg;2;179,98;klient99@example.pl
+ZAM-0274;2025-05-26;Warszawa;00-950;M³ynek do kawy;1;159,50;klient39@example.pl
+ZAM-0163;2025-04-13;Warszawa;00-950;M³ynek do kawy;2;319,00;klient74@example.pl
+ZAM-0122;03.03.2025;Warszawa;00-950;Ekspres przelewowy;3;1 047,00;klient91@example.pl
+ZAM-0091;15.03.2025;Kraków;30-001;Kubek termiczny;2;129,80;klient116@example.pl
+ZAM-0089;2025-02-20;Gdañsk;80-001;Ekspres przelewowy;1;349,00;klient39@example.pl
+ZAM-0182;2025-04-27;£ódŸ;90-001;Kawa ziarnista 1 kg;4;359,96;klient80@example.pl
+ZAM-0285;19.01.2025;Kraków;30-001;Kubek termiczny;2;129,80;klient42@example.pl
+ZAM-0280;14/02/2025;Poznañ;60-001;Kubek termiczny;2;129,80;klient86@example.pl
+ZAM-0029;2025-02-24;Lodz;90-001;Ekspres przelewowy;3;1 047,00;klient44@example.pl
+ZAM-0137;21.02.2025;Warszawa;00-950;Ekspres przelewowy;1;349,00;klient85@example.pl
+ZAM-0124;11/01/2025;£ódŸ;90-001;Kubek termiczny;3;194,70;klient89@example.pl
+ZAM-0127;12.05.2025;Gdañsk;80-001;Ekspres przelewowy;2;698,00;klient23@example.pl
+ZAM-0052;14/01/2025;Poznañ;60-001;Ekspres przelewowy;4;1 396,00;klient55@example.pl
+ZAM-0082;2025-09-18;Wroc³aw;50-001;  Kubek termiczny;2;129,80;klient110@example.pl
+ZAM-0120;15.08.2025;Gdañsk;80-001;Kubek termiczny;4;259,60;klient15@example.pl
+ZAM-0292;21.07.2025;Kraków;30-001;Filtry papierowe;2;25,98;klient31@example.pl
+ZAM-0272;20.04.2025;Poznañ;60-001;Ekspres przelewowy;4;1 396,00;klient111@example.pl
+ZAM-0242;2025-08-05;Wroclaw;50-001;Ekspres przelewowy;3;1 047,00;klient52@example.pl
+ZAM-0030;27.01.2025;Warszawa;00-950;M³ynek do kawy;4;brak;klient99@example.pl
+ZAM-0018;31.01.2025;Kraków;30-001;Ekspres przelewowy;400;139 600,00;klient31@example.pl
+ZAM-0016;26.03.2025;Warszawa;00-950;Ekspres przelewowy;4;1 396,00;klient70@example.pl
+ZAM-0113;31.08.2025;Wroc³aw;50-001;  M³ynek do kawy;3;478,50;klient95@example.pl
+ZAM-0164;14.02.2025;Gdañsk;80-001;Kubek termiczny;2;129,80;klient53@example.pl
+ZAM-0014;08.09.2025;Gdañsk;80-001;Ekspres przelewowy;1;349,00;klient40@example.pl
+ZAM-0093;24.02.2025;Gdañsk;80-001;Ekspres przelewowy;4;1 396,00;klient38@example.pl
+ZAM-0139;02/05/2025;Poznañ;60-001;Kubek termiczny;1;64,90;klient30@example.pl
+ZAM-0199;10.03.2025;Gdañsk;80-001;M³ynek do kawy;2;319,00;klient90@example.pl
+ZAM-0165;07.02.2025;Wroc³aw;50-001;Kawa ziarnista 1 kg;2;179,98;klient100@example.pl
+ZAM-0258;07.07.2025;Wroc³aw;50-001;Kawa ziarnista 1 kg;1;89,99;klient28@example.pl
+ZAM-0177;28.05.2025;Kraków;30-001;Filtry papierowe;2;25,98;klient80@example.pl
+ZAM-0249;19.06.2025;Warszawa;00-950;Ekspres przelewowy;2;698,00;klient24@example.pl
+ZAM-0295;03.03.2025;Warszawa;00-950;Kubek termiczny;3;194,70;klient78@example.pl
+ZAM-0256;16.09.2025;Warszawa;00-950;Ekspres przelewowy;4;1 396,00;klient57@example.pl
+ZAM-0184;16/06/2025;£ódŸ;90-001;Kawa ziarnista 1 kg;2;179,98;klient59@example.pl
+ZAM-0196;05/04/2025;Gdañsk;80-001;Kawa ziarnista 1 kg;4;brak;klient50@example.pl
+ZAM-0010;24.07.2025;£ódŸ;90-001;Filtry papierowe;4;51,96;klient97@example.pl
+ZAM-0279;20.07.2025;Kraków;30-001;Ekspres przelewowy;2;698,00;klient40@example.pl
+ZAM-0128;18.08.2025;Poznañ;60-001;Kubek termiczny;4;259,60;klient42@example.pl
+ZAM-0270;02.09.2025;Wroclaw;50-001;Kawa ziarnista 1 kg;4;359,96;klient41@example.pl
+ZAM-0103;08.09.2025;Wroc³aw;50-001;Ekspres przelewowy;4;1 396,00;klient28@example.pl
+ZAM-0215;2025-04-07;Wroc³aw;50-001;Filtry papierowe;1;12,99;klient27@example.pl
+ZAM-0071;29.04.2025;KRAKÓW;30-001;Kubek termiczny;4;259,60;klient30@example.pl
+ZAM-0197;04.06.2025;Warszawa;00-950;Kubek termiczny;3;194,70;klient31@example.pl
+ZAM-0144;2025-06-21;Warszawa;00-950;Kawa ziarnista 1 kg;3;269,97;klient90@example.pl
+ZAM-0045;23.09.2025;Kraków;30-001;Ekspres przelewowy;2;698,00;klient18@example.pl
+ZAM-0032;22.01.2025;³ódŸ;90-001;Filtry papierowe;2;25,98;klient116@example.pl
+ZAM-0246;13.01.2025;Poznañ;60-001;Filtry papierowe;2;25,98;klient107@example.pl
+ZAM-0282;2025-05-18;Poznañ;60-001;M³ynek do kawy;2;319,00;klient55@example.pl
