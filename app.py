@@ -11,6 +11,16 @@ import streamlit as st
 from loading import load_file
 from profiling import profile_dataframe
 
+
+def odmien_problem(n: int) -> str:
+    """Polska odmiana: 1 problem, 2 problemy, 5 problemów, 22 problemy."""
+    if n == 1:
+        return "1 problem"
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return f"{n} problemy"
+    return f"{n} problemów"
+
+
 st.set_page_config(page_title="Asystent danych dla Power BI", layout="wide")
 
 st.title("Asystent danych dla Power BI")
@@ -72,7 +82,7 @@ columns_with_issues = [c for c in profile.columns if c.issues]
 if not columns_with_issues:
     st.success("Nie znaleziono problemów w kolumnach.")
 for col in columns_with_issues:
-    with st.expander(f"{col.name} · {len(col.issues)} problem(y)"):
+    with st.expander(f"{col.name} · {odmien_problem(len(col.issues))}"):
         for issue in col.issues:
             st.markdown(f"- {issue}")
 
