@@ -29,8 +29,8 @@ NUMBER_TYPES = {"liczba całkowita", "liczba (przecinek)", "liczba (kropka)"}
 
 # Próg: od ilu % pasujących wartości uznajemy, że kolumna "jest" danego typu.
 TYPE_THRESHOLD = 0.8
-
-
+# Słowa i znaki, którymi ludzie w plikach oznaczają brak danych.
+MISSING_PLACEHOLDERS = {"brak", "-", "--", "n/a", "null", "none", "nan", "b.d.", "bd", "?"}
 @dataclass
 class ColumnProfile:
     name: str
@@ -85,6 +85,14 @@ def profile_column(series: pd.Series) -> ColumnProfile:
     non_null = series.dropna().astype(str)
     missing_pct = 1 - len(non_null) / total if total else 0.0
     issues: list[str] = []
+    
+    # 0. Brak danych zapisany słowem ("brak", "-", "n/a"...)
+    is_placeholder = non_null.str.strip().str.lower().isin(MISSING_PLACEHOLDERS)
+    if is_placeholder.any():
+        examples = ", ".join(map(repr, non_null[is_placeholder].unique()[:3]))
+        issues.append(f"{is_placeholder.sum()} wartości oznacza brak danych zapisany słowem, np.: {examples}")
+        non_null = non_null[~is_placeholder]  # dalej analizujemy już bez nich
+    
 
     if non_null.empty:
         return ColumnProfile(series.name, "pusta", 0.0, missing_pct, 0, [], ["Kolumna jest całkowicie pusta"])
