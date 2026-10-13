@@ -55,6 +55,19 @@ class DatasetProfile:
 
 
 # --- Funkcje pomocnicze -------------------------------------------------------
+NIP_WEIGHTS = (6, 5, 7, 2, 3, 4, 5, 6, 7)
+
+
+def is_valid_nip(value: str) -> bool:
+    """Sprawdza, czy NIP jest poprawny (długość i cyfra kontrolna).
+
+    Akceptuje zapisy z myślnikami, spacjami i prefiksem PL, np. "123-456-32-18".
+    """
+    digits = re.sub(r"\D", "", value)  # zostawiamy same cyfry
+    if len(digits) != 10:
+        return False
+    checksum = sum(int(d) * w for d, w in zip(digits, NIP_WEIGHTS)) % 11
+    return checksum == int(digits[9])
 def _match_shares(values: pd.Series) -> dict[str, float]:
     """Dla każdego wzorca: jaki ułamek wartości do niego pasuje."""
     return {
@@ -172,6 +185,14 @@ def profile_column(series: pd.Series) -> ColumnProfile:
             example = " / ".join(map(repr, variants[0][:4]))
             issues.append(f"{len(variants)} grup wartości zapisanych na kilka sposobów, np.: {example}")
 
+    if "nip" in str(series.name).lower():
+        invalid = stripped[~stripped.map(is_valid_nip)]
+        if len(invalid):
+            examples = ", ".join(map(repr, invalid.unique()[:3]))
+            issues.append(f"{len(invalid)} niepoprawnych numerów NIP (zła cyfra kontrolna lub długość), np.: {examples}")
+        formats = stripped.str.replace(r"\d", "9", regex=True).unique()
+        if len(formats) > 1:
+            issues.append(f"NIP zapisany na {len(formats)} sposoby: " + ", ".join(sorted(formats)))
     return ColumnProfile(
         name=series.name,
         detected_type=detected_type,
