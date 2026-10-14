@@ -1,5 +1,5 @@
 """
-Asystent danych dla Power BI - etap 1: wczytanie pliku i raport jakości danych.
+Asystent danych dla Power BI: raport jakości, plan czyszczenia i kod Power Query.
 
 Uruchom w terminalu:
     streamlit run app.py
@@ -8,6 +8,7 @@ Uruchom w terminalu:
 import pandas as pd
 import streamlit as st
 
+from cleaning import apply_steps, steps_to_m, suggest_steps
 from loading import load_file
 from profiling import profile_dataframe
 
@@ -97,3 +98,54 @@ st.download_button(
     file_name="raport_jakosci.csv",
     mime="text/csv",
 )
+
+# --- Plan czyszczenia -----------------------------------------------------------
+st.divider()
+st.header("Plan czyszczenia")
+st.caption("Zaznacz kroki, które chcesz wykonać. Podgląd i kod Power Query zmienią się automatycznie.")
+
+steps = suggest_steps(df, profile)
+chosen = []
+for step in steps:
+    if st.checkbox(step.label, value=True, key=step.key):
+        chosen.append(step)
+    st.caption(step.reason)
+
+st.info("Wartości odstające (np. zamówienie na 400 sztuk) celowo nie są usuwane automatycznie - "
+        "to może być błąd albo prawdziwe duże zamówienie. Taką decyzję podejmuje analityk.")
+
+# --- Podgląd przed i po -----------------------------------------------------------
+cleaned = apply_steps(df, chosen)
+
+st.subheader("Podgląd: przed i po")
+c1, c2 = st.columns(2)
+c1.metric("Wiersze przed", len(df))
+c2.metric("Wiersze po", len(cleaned), delta=len(cleaned) - len(df))
+
+tab_before, tab_after = st.tabs(["Przed czyszczeniem", "Po czyszczeniu"])
+with tab_before:
+    st.dataframe(df.head(20), hide_index=True)
+with tab_after:
+    st.dataframe(cleaned.head(20), hide_index=True)
+
+# --- Kod Power Query --------------------------------------------------------------
+st.divider()
+st.header("Kod Power Query")
+file_path = st.text_input(
+    "Ścieżka do pliku na komputerze z Power BI",
+    value=f"C:\\dane\\{uploaded.name}",
+    help="Power BI musi wiedzieć, skąd wczytać oryginalny plik. Wpisz ścieżkę z Windowsa.",
+)
+m_code = steps_to_m(chosen, file_path, result.file_type, result.encoding, result.separator)
+st.code(m_code, language=None)
+st.download_button("Pobierz kod (.pq)", m_code.encode("utf-8"), file_name="czyszczenie.pq", mime="text/plain")
+
+with st.expander("Jak użyć tego kodu w Power BI"):
+    st.markdown(
+        "1. W Power BI Desktop: **Pobierz dane → Pusta kwerenda** (Blank query).\n"
+        "2. W edytorze Power Query: **Edytor zaawansowany** (Advanced Editor).\n"
+        "3. Usuń wszystko, co tam jest, i wklej kod z tej strony.\n"
+        "4. Kliknij **Gotowe**, a potem **Zamknij i zastosuj**.\n\n"
+        "Gdy przyjdzie nowy plik z tymi samymi błędami, podmień go i kliknij **Odśwież** - "
+        "czyszczenie wykona się samo."
+    )
