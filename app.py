@@ -1,5 +1,8 @@
 """
-Asystent danych dla Power BI: raport jakości, plan czyszczenia i kod Power Query.
+Data Assistant for Power BI / Asystent danych dla Power BI.
+
+Raport jakości danych, plan czyszczenia i gotowy kod Power Query.
+Interfejs po angielsku i po polsku (przełącznik w panelu bocznym).
 
 Uruchom w terminalu:
     streamlit run app.py
@@ -9,120 +12,119 @@ import pandas as pd
 import streamlit as st
 
 from cleaning import apply_steps, steps_to_m, suggest_steps
+from i18n import LANGUAGES, TEXTS, issues_count, t
 from loading import load_file
 from profiling import profile_dataframe
 
+st.set_page_config(page_title="Data Assistant for Power BI", layout="wide")
 
-def odmien_problem(n: int) -> str:
-    """Polska odmiana: 1 problem, 2 problemy, 5 problemów, 22 problemy."""
-    if n == 1:
-        return "1 problem"
-    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
-        return f"{n} problemy"
-    return f"{n} problemów"
+# --- Wybór języka ----------------------------------------------------------------
+lang = st.sidebar.radio(
+    "Language / Język",
+    options=list(LANGUAGES),          # ["en", "pl"]
+    format_func=LANGUAGES.get,        # pokazujemy "English" / "Polski"
+)
 
+st.title(t("app_title", lang))
+st.caption(t("app_caption", lang))
 
-st.set_page_config(page_title="Asystent danych dla Power BI", layout="wide")
-
-st.title("Asystent danych dla Power BI")
-st.caption("Wrzuć plik CSV lub Excel, a zobaczysz, co trzeba poprawić przed wczytaniem do Power BI.")
-
-uploaded = st.file_uploader("Wybierz plik", type=["csv", "xlsx", "xls"])
+uploaded = st.file_uploader(t("choose_file", lang), type=["csv", "xlsx", "xls"])
 
 if uploaded is None:
-    st.info("Nie masz pliku pod ręką? Uruchom `python data/generate_test_data.py` "
-            "i wrzuć `data/zamowienia_brudne.csv`.")
+    st.info(t("no_file_hint", lang))
     st.stop()
 
 # --- Wczytanie ----------------------------------------------------------------
 try:
     result = load_file(uploaded.getvalue(), uploaded.name)
 except Exception as e:  # pokazujemy błąd zrozumiale, zamiast "wywalać" aplikację
-    st.error(f"Nie udało się wczytać pliku: {e}")
+    st.error(t("load_error", lang, error=e))
     st.stop()
 
 df = result.df
 if result.file_type == "csv":
-    sep_name = {";": "średnik", ",": "przecinek", "\t": "tabulator", "|": "kreska"}.get(result.separator, result.separator)
-    st.success(f"Wczytano plik CSV · kodowanie: **{result.encoding}** · separator: **{sep_name}**")
+    sep_key = "sep_" + result.separator
+    sep_name = t(sep_key, lang) if sep_key in TEXTS else result.separator
+    st.success(t("loaded_csv", lang, encoding=result.encoding, separator=sep_name))
 else:
-    st.success("Wczytano plik Excel")
+    st.success(t("loaded_excel", lang))
 
-with st.expander("Podgląd danych (pierwsze 20 wierszy)"):
+with st.expander(t("preview_raw", lang)):
     st.dataframe(df.head(20), hide_index=True)
 
 # --- Profilowanie ---------------------------------------------------------------
 profile = profile_dataframe(df)
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Wiersze", f"{profile.row_count:,}".replace(",", " "))
-c2.metric("Kolumny", profile.column_count)
-c3.metric("Zduplikowane wiersze", profile.duplicate_rows)
-c4.metric("Wykryte problemy", profile.issue_count)
+c1.metric(t("metric_rows", lang), f"{profile.row_count:,}".replace(",", " "))
+c2.metric(t("metric_columns", lang), profile.column_count)
+c3.metric(t("metric_duplicates", lang), profile.duplicate_rows)
+c4.metric(t("metric_issues", lang), profile.issue_count)
 
-st.subheader("Kolumny")
+st.subheader(t("columns_header", lang))
 summary = pd.DataFrame([
     {
-        "Kolumna": c.name,
-        "Wykryty typ": c.detected_type,
-        "Zgodność z typem": f"{c.type_match_pct:.0%}",
-        "Braki": f"{c.missing_pct:.0%}",
-        "Unikalne": c.unique_count,
-        "Problemy": len(c.issues),
-        "Przykłady": ", ".join(map(str, c.sample_values[:3])),
+        t("col_name", lang): c.name,
+        t("col_type", lang): t("type_" + c.detected_type, lang),
+        t("col_match", lang): f"{c.type_match_pct:.0%}",
+        t("col_missing", lang): f"{c.missing_pct:.0%}",
+        t("col_unique", lang): c.unique_count,
+        t("col_issues", lang): len(c.issues),
+        t("col_examples", lang): ", ".join(map(str, c.sample_values[:3])),
     }
     for c in profile.columns
 ])
 st.dataframe(summary, hide_index=True)
 
-st.subheader("Szczegóły problemów")
+st.subheader(t("issues_header", lang))
 if profile.duplicate_rows:
-    st.warning(f"Tabela zawiera {profile.duplicate_rows} zduplikowanych wierszy.")
+    st.warning(t("duplicates_warning", lang, n=profile.duplicate_rows))
 
 columns_with_issues = [c for c in profile.columns if c.issues]
 if not columns_with_issues:
-    st.success("Nie znaleziono problemów w kolumnach.")
+    st.success(t("no_issues", lang))
 for col in columns_with_issues:
-    with st.expander(f"{col.name} · {odmien_problem(len(col.issues))}"):
+    with st.expander(f"{col.name} · {issues_count(len(col.issues), lang)}"):
         for issue in col.issues:
-            st.markdown(f"- {issue}")
+            st.markdown(f"- {issue.render(lang)}")
 
 # --- Eksport raportu --------------------------------------------------------------
 report = pd.DataFrame(
-    [{"kolumna": c.name, "typ": c.detected_type, "problem": issue}
+    [{t("report_col_column", lang): c.name,
+      t("report_col_type", lang): t("type_" + c.detected_type, lang),
+      t("report_col_issue", lang): issue.render(lang)}
      for c in profile.columns for issue in c.issues]
 )
 st.download_button(
-    "Pobierz raport jakości (CSV)",
+    t("download_report", lang),
     report.to_csv(index=False, sep=";").encode("utf-8-sig"),  # utf-8-sig: Excel poprawnie pokaże polskie znaki
-    file_name="raport_jakosci.csv",
+    file_name=t("report_file", lang),
     mime="text/csv",
 )
 
 # --- Plan czyszczenia -----------------------------------------------------------
 st.divider()
-st.header("Plan czyszczenia")
-st.caption("Zaznacz kroki, które chcesz wykonać. Podgląd i kod Power Query zmienią się automatycznie.")
+st.header(t("plan_header", lang))
+st.caption(t("plan_caption", lang))
 
 steps = suggest_steps(df, profile)
 chosen = []
 for step in steps:
-    if st.checkbox(step.label, value=True, key=step.key):
+    if st.checkbox(step.label(lang), value=True, key=step.key):
         chosen.append(step)
-    st.caption(step.reason)
+    st.caption(step.reason(lang))
 
-st.info("Wartości odstające (np. zamówienie na 400 sztuk) celowo nie są usuwane automatycznie - "
-        "to może być błąd albo prawdziwe duże zamówienie. Taką decyzję podejmuje analityk.")
+st.info(t("plan_outliers_note", lang))
 
 # --- Podgląd przed i po -----------------------------------------------------------
 cleaned = apply_steps(df, chosen)
 
-st.subheader("Podgląd: przed i po")
+st.subheader(t("preview_header", lang))
 c1, c2 = st.columns(2)
-c1.metric("Wiersze przed", len(df))
-c2.metric("Wiersze po", len(cleaned), delta=len(cleaned) - len(df))
+c1.metric(t("rows_before", lang), len(df))
+c2.metric(t("rows_after", lang), len(cleaned), delta=len(cleaned) - len(df))
 
-tab_before, tab_after = st.tabs(["Przed czyszczeniem", "Po czyszczeniu"])
+tab_before, tab_after = st.tabs([t("tab_before", lang), t("tab_after", lang)])
 with tab_before:
     st.dataframe(df.head(20), hide_index=True)
 with tab_after:
@@ -130,22 +132,17 @@ with tab_after:
 
 # --- Kod Power Query --------------------------------------------------------------
 st.divider()
-st.header("Kod Power Query")
+st.header(t("code_header", lang))
 file_path = st.text_input(
-    "Ścieżka do pliku na komputerze z Power BI",
-    value=f"C:\\dane\\{uploaded.name}",
-    help="Power BI musi wiedzieć, skąd wczytać oryginalny plik. Wpisz ścieżkę z Windowsa.",
+    t("path_label", lang),
+    value=t("path_default_folder", lang) + uploaded.name,
+    help=t("path_help", lang),
+    key="file_path",
 )
-m_code = steps_to_m(chosen, file_path, result.file_type, result.encoding, result.separator)
+m_code = steps_to_m(chosen, file_path, result.file_type, result.encoding, result.separator, lang)
 st.code(m_code, language=None)
-st.download_button("Pobierz kod (.pq)", m_code.encode("utf-8"), file_name="czyszczenie.pq", mime="text/plain")
+st.download_button(t("download_code", lang), m_code.encode("utf-8"),
+                   file_name=t("code_file", lang), mime="text/plain")
 
-with st.expander("Jak użyć tego kodu w Power BI"):
-    st.markdown(
-        "1. W Power BI Desktop: **Pobierz dane → Pusta kwerenda** (Blank query).\n"
-        "2. W edytorze Power Query: **Edytor zaawansowany** (Advanced Editor).\n"
-        "3. Usuń wszystko, co tam jest, i wklej kod z tej strony.\n"
-        "4. Kliknij **Gotowe**, a potem **Zamknij i zastosuj**.\n\n"
-        "Gdy przyjdzie nowy plik z tymi samymi błędami, podmień go i kliknij **Odśwież** - "
-        "czyszczenie wykona się samo."
-    )
+with st.expander(t("howto_header", lang)):
+    st.markdown(t("howto_body", lang))

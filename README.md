@@ -1,55 +1,87 @@
-# Asystent danych dla Power BI
+# Data Assistant for Power BI
 
-Narzędzie, które przygotowuje „brudne” dane do Power BI: wykrywa problemy z jakością,
-proponuje kroki czyszczenia i generuje gotowy kod Power Query (M) oraz miary DAX.
-Szczególny nacisk na **polskie formaty danych**: kodowanie Windows-1250, przecinek
-dziesiętny, daty `dd.mm.rrrr`, kody pocztowe, warianty nazw z polskimi znakami.
+**A tool that prepares messy data for Power BI: it detects data quality issues, proposes a cleaning plan
+and generates ready-to-use Power Query (M) code.** Built with Polish data formats in mind:
+Windows-1250 encoding, decimal commas, `dd.mm.yyyy` dates, postcodes, NIP (tax ID) check digits
+and spelling variants with Polish characters (`Kraków` / `krakow` / `KRAKÓW`).
 
-> Status: **etap 1 – wczytywanie i raport jakości danych** ✅
+The interface is available in **English and Polish**.
 
-## Jak uruchomić
+🇵🇱 *Wersja polska poniżej.*
+
+## How it works
+
+1. **Upload** a CSV or Excel file. Encoding and separator are detected automatically.
+2. **Quality report**: every column gets a detected type, missing values, unique counts and a list of issues.
+3. **Cleaning plan**: suggested steps with checkboxes and a before/after preview.
+4. **Power Query code**: paste it into Power BI (*Get data → Blank query → Advanced Editor*).
+   From then on, Power BI cleans every new version of the file on refresh.
+
+## Result in Power BI
+
+The generated code runs in Power BI Desktop without errors - every column passes the *Column quality* check
+with **0% errors**:
+
+![Power Query result](powerbi-wynik.png)
+
+Each cleaning step appears as a named step in *Applied Steps*:
+
+![Applied steps](powerbi-kroki.png)
+
+## Design decisions
+
+- **Rules first, no black box.** Profiling and cleaning are plain, deterministic Python rules.
+  The same rule always gives the same result, and every step can be explained.
+- **Everything is read as text.** pandas guesses types by default and can silently corrupt data
+  (e.g. strip leading zeros). Types are detected in a controlled way instead.
+- **One step, two implementations.** Each cleaning step exists in pandas (for the preview) and in M
+  (for Power BI), so the preview matches what Power BI produces.
+- **The analyst decides.** Outliers are reported but never removed automatically - a 400-item order
+  may be an error or a genuine large order.
+
+## Run locally
 
 ```bash
-python -m venv .venv
-# Windows:      .venv\Scripts\activate
-# macOS/Linux:  source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-python data/generate_test_data.py   # tworzy przykładowy brudny plik
-streamlit run app.py                # otwiera aplikację w przeglądarce
+python data/generate_test_data.py  # creates a deliberately messy sample file
+streamlit run app.py               # opens the app in your browser
+python -m pytest                   # runs the automated tests
 ```
 
-## Co już działa
+## Project structure
 
-- automatyczne wykrywanie kodowania (UTF-8 / Windows-1250) i separatora CSV,
-- wykrywanie typu każdej kolumny: liczby (z przecinkiem i kropką), daty w różnych formatach,
-  kody pocztowe, e-maile, tekst,
-- wykrywanie problemów: braki, duplikaty, zbędne spacje, mieszane formaty dat,
-  wartości niepasujące do typu, wartości odstające (IQR), warianty tej samej wartości
-  („Kraków” / „krakow” / „KRAKÓW”),
-- raport jakości do pobrania jako CSV.
-
-## Struktura
-
-| Plik | Rola |
+| File | Purpose |
 |---|---|
-| `app.py` | interfejs (Streamlit) |
-| `loading.py` | wczytywanie plików, wykrywanie kodowania i separatora |
-| `profiling.py` | profilowanie kolumn i wykrywanie problemów |
-| `data/generate_test_data.py` | generator brudnych danych testowych |
+| `app.py` | user interface (Streamlit) |
+| `loading.py` | file loading, encoding and separator detection |
+| `profiling.py` | column profiling and data quality rules |
+| `cleaning.py` | cleaning steps (pandas) and Power Query code generation (M) |
+| `i18n.py` | English and Polish texts |
+| `tests/` | automated tests (pytest) |
+| `data/generate_test_data.py` | generator of messy test data |
 
-## Decyzje projektowe
+## Roadmap
 
-- **Wszystko wczytuję jako tekst.** pandas domyślnie zgaduje typy i potrafi po cichu
-  zepsuć dane (np. obciąć zera wiodące). Typy wykrywam sama, w kontrolowany sposób.
-- **Profilowanie bez AI.** Ta część musi być przewidywalna i powtarzalna. Model językowy
-  pojawi się dopiero na etapie proponowania kroków czyszczenia – i dostanie tylko profil
-  danych, nie cały plik.
+- [x] Data quality report with Polish-specific rules
+- [x] Cleaning plan with before/after preview
+- [x] Power Query code generation, tested in Power BI Desktop
+- [x] English and Polish interface
+- [ ] Power BI sales dashboard built on the cleaned data
+- [ ] AI suggestions for additional cleaning steps (e.g. filling a missing city from the postcode)
 
-## Plan
+---
 
-- [x] Etap 1 – wczytywanie i profilowanie
-- [ ] Etap 2 – rozszerzone reguły (NIP, PESEL, wartości typu „brak”/„-”, kodowanie)
-- [ ] Etap 3 – kroki czyszczenia + generowanie kodu Power Query (M)
-- [ ] Etap 4 – AI proponuje plan czyszczenia
-- [ ] Etap 5 – miary DAX + case study na prawdziwych danych
+## 🇵🇱 Wersja polska
+
+**Asystent danych dla Power BI** wykrywa problemy z jakością danych, proponuje plan czyszczenia
+i generuje gotowy kod Power Query. Szczególny nacisk położony jest na polskie formaty danych:
+kodowanie Windows-1250, przecinek dziesiętny, daty `dd.mm.rrrr`, kody pocztowe, cyfrę kontrolną NIP
+oraz warianty nazw z polskimi znakami.
+
+Kod wygenerowany przez aplikację został przetestowany w Power BI Desktop: wszystkie kolumny
+przechodzą kontrolę *Column quality* z wynikiem **0% błędów**.
+
+Instrukcja uruchomienia i opis plików znajdują się w części angielskiej powyżej.

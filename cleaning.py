@@ -1,5 +1,5 @@
 """
-Etap 3: kroki czyszczenia danych i generowanie kodu Power Query (M).
+Kroki czyszczenia danych i generowanie kodu Power Query (M).
 
 Każdy krok ma dwie "twarze":
 - wersję w pandas (apply_steps)  -> podgląd "przed i po" w aplikacji,
@@ -12,24 +12,45 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from profiling import MISSING_PLACEHOLDERS, NUMBER_TYPES, DatasetProfile, _normalize_text
+from i18n import t
+from profiling import (MISSING_PLACEHOLDERS, NUMBER_TYPES, THOUSANDS_SEP,
+                       DatasetProfile, normalize_text, to_number)
 
 # Kolejność, w jakiej kroki są wykonywane (niezależnie od kolejności zaznaczania).
-STEP_ORDER = ["trim", "puste", "warianty", "liczby", "daty", "nip", "duplikaty"]
+STEP_ORDER = ["trim", "nulls", "variants", "numbers", "dates", "nip", "duplicates"]
 
 
 @dataclass
 class Step:
-    kind: str                     # rodzaj kroku, np. "trim", "daty"
-    label: str                    # krótki opis widoczny przy checkboxie
-    reason: str                   # dlaczego ten krok jest proponowany
+    kind: str                                   # rodzaj kroku, np. "trim", "dates"
     columns: list[str] = field(default_factory=list)
-    params: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)  # ustawienia kroku, np. mapa zamian
 
     @property
     def key(self) -> str:
         """Unikalny identyfikator kroku (potrzebny dla checkboxów w Streamlit)."""
         return self.kind + ":" + ",".join(self.columns)
+
+    # --- Opisy kroków w wybranym języku ---
+    def label(self, lang: str) -> str:
+        col = self.columns[0] if self.columns else ""
+        if self.kind == "numbers":
+            key = "step_numbers_int_label" if self.params["integer"] else "step_numbers_dec_label"
+            return t(key, lang, col=col)
+        return t(f"step_{self.kind}_label", lang, col=col)
+
+    def reason(self, lang: str) -> str:
+        p = self.params
+        if self.kind == "trim":
+            return t("step_trim_reason", lang, columns=", ".join(self.columns))
+        if self.kind == "variants":
+            examples = ", ".join(f"„{k}” → „{v}”" for k, v in list(p["mapping"].items())[:3])
+            return t("step_variants_reason", lang, n=len(p["mapping"]), examples=examples)
+        if self.kind == "numbers":
+            return t("step_numbers_reason", lang, type=t("type_" + p["type"], lang), culture=p["culture"])
+        if self.kind == "duplicates":
+            return t("step_duplicates_reason", lang, n=p["n"])
+        return t(f"step_{self.kind}_reason", lang)
 
 
 def _text_columns(df: pd.DataFrame) -> list[str]:
@@ -46,20 +67,14 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
     by_name = {c.name: c for c in profile.columns}
 
     # Zbędne spacje
-    trim_cols = []
-    for col in text_cols:
-        values = df[col].dropna()
-        if (values != values.str.strip()).any():
-            trim_cols.append(col)
+    trim_cols = [col for col in text_cols
+                 if (df[col].dropna() != df[col].dropna().str.strip()).any()]
     if trim_cols:
-        steps.append(Step("trim", "Usuń zbędne spacje na początku i końcu tekstu",
-                          "Kolumny: " + ", ".join(trim_cols), trim_cols))
+        steps.append(Step("trim", trim_cols))
 
     # Puste komórki i "brak" -> null (zawsze proponujemy dla plików tekstowych)
     if text_cols:
-        steps.append(Step("puste", "Zamień puste komórki i słowa typu „brak”, „-” na brak danych (null)",
-                          "Power BI traktuje pusty tekst i słowo „brak” jak zwykłą wartość - "
-                          "po zamianie na null poprawnie policzy średnie i sumy.", text_cols))
+        steps.append(Step("nulls", text_cols))
 
     for col in text_cols:
         info = by_name.get(col)
@@ -69,46 +84,35 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
         values = values[~values.str.lower().isin(MISSING_PLACEHOLDERS)]
 
         # Warianty tej samej wartości ("Kraków" / "krakow" / "KRAKÓW")
-        if info.detected_type == "tekst" and "nip" not in col.lower() and 0 < values.nunique() <= 200:
+        if info.detected_type == "text" and "nip" not in col.lower() and 0 < values.nunique() <= 200:
             mapping = {}
-            for _, group in values.groupby(values.map(_normalize_text)):
+            for _, group in values.groupby(values.map(normalize_text)):
                 counts = group.value_counts()
                 if len(counts) > 1:
                     canonical = counts.index[0]  # najczęstszy zapis wygrywa
                     mapping.update({v: canonical for v in counts.index[1:]})
             if mapping:
-                example = ", ".join(f"„{k}” → „{v}”" for k, v in list(mapping.items())[:3])
-                steps.append(Step("warianty", f"Ujednolić zapis wartości w kolumnie „{col}”",
-                                  f"{len(mapping)} zamian, np. {example}. Wybieramy najczęstszy zapis.",
-                                  [col], {"mapping": mapping}))
+                steps.append(Step("variants", [col], {"mapping": mapping}))
 
         # Liczby zapisane jako tekst
         if info.detected_type in NUMBER_TYPES:
-            integer = info.detected_type == "liczba całkowita"
-            culture = "en-US" if info.detected_type == "liczba (kropka)" else "pl-PL"
-            label = "liczby całkowite" if integer else "liczby dziesiętne"
-            steps.append(Step("liczby", f"Zamień „{col}” na {label}",
-                              f"Wykryty format: {info.detected_type}. Usuwamy spacje tysięcy "
-                              f"i konwertujemy z ustawieniami regionalnymi {culture}.",
-                              [col], {"integer": integer, "culture": culture}))
+            steps.append(Step("numbers", [col], {
+                "type": info.detected_type,
+                "integer": info.detected_type == "integer",
+                "culture": "en-US" if info.detected_type == "decimal_dot" else "pl-PL",
+            }))
 
         # Daty
-        if info.detected_type.startswith("data"):
-            steps.append(Step("daty", f"Zamień „{col}” na datę",
-                              "Rozpoznajemy formaty dd.mm.rrrr, dd/mm/rrrr i rrrr-mm-dd "
-                              "i zamieniamy wszystkie na jeden typ: data.", [col]))
+        if info.detected_type.startswith("date"):
+            steps.append(Step("dates", [col]))
 
         # NIP - zostawiamy same cyfry
         if "nip" in col.lower():
-            steps.append(Step("nip", f"Ujednolić format NIP w kolumnie „{col}”",
-                              "Usuwamy myślniki, spacje i prefiks PL - zostaje 10 cyfr. "
-                              "Błędne numery (zła cyfra kontrolna) trzeba sprawdzić ręcznie.", [col]))
+            steps.append(Step("nip", [col]))
 
     # Duplikaty
     if profile.duplicate_rows:
-        steps.append(Step("duplikaty", "Usuń zduplikowane wiersze",
-                          f"W surowych danych jest {profile.duplicate_rows} duplikatów. "
-                          "Usuwamy je na końcu, bo po czyszczeniu może ich być więcej."))
+        steps.append(Step("duplicates", params={"n": profile.duplicate_rows}))
 
     # Pokazujemy kroki w tej samej kolejności, w jakiej będą wykonywane.
     return sorted(steps, key=lambda s: STEP_ORDER.index(s.kind))
@@ -117,17 +121,17 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
 # =============================================================================
 # 2. WYKONANIE KROKÓW W PANDAS (podgląd)
 # =============================================================================
-def _parse_date(value):
-    if pd.isna(value):
-        return pd.NaT
-    text = str(value).strip()
-    if "." in text:
-        fmt = "%d.%m.%Y"
-    elif "/" in text:
-        fmt = "%d/%m/%Y"
-    else:
-        fmt = "%Y-%m-%d"
-    return pd.to_datetime(text, format=fmt, errors="coerce")
+DATE_FORMATS = {".": "%d.%m.%Y", "/": "%d/%m/%Y", "-": "%Y-%m-%d"}
+
+
+def _parse_dates(s: pd.Series) -> pd.Series:
+    """Rozpoznaje format każdej daty po znaku, który ją dzieli (. / -)."""
+    text = s.str.strip()
+    result = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
+    for sep, fmt in DATE_FORMATS.items():
+        mask = text.str.contains(sep, regex=False, na=False)
+        result[mask] = pd.to_datetime(text[mask], format=fmt, errors="coerce")
+    return result
 
 
 def apply_steps(df: pd.DataFrame, steps: list[Step]) -> pd.DataFrame:
@@ -138,22 +142,19 @@ def apply_steps(df: pd.DataFrame, steps: list[Step]) -> pd.DataFrame:
             s = out[col]
             if step.kind == "trim":
                 out[col] = s.str.strip()
-            elif step.kind == "puste":
+            elif step.kind == "nulls":
                 is_missing = s.str.strip().str.lower().isin(MISSING_PLACEHOLDERS | {""})
                 out[col] = s.mask(is_missing)
-            elif step.kind == "warianty":
+            elif step.kind == "variants":
                 out[col] = s.replace(step.params["mapping"])
-            elif step.kind == "liczby":
-                cleaned = s.str.replace("[ \u00a0]", "", regex=True)
-                if step.params["culture"] == "pl-PL":
-                    cleaned = cleaned.str.replace(",", ".", regex=False)
-                numbers = pd.to_numeric(cleaned, errors="coerce")
+            elif step.kind == "numbers":
+                numbers = to_number(s, step.params["type"])
                 out[col] = numbers.astype("Int64") if step.params["integer"] else numbers
-            elif step.kind == "daty":
-                out[col] = pd.to_datetime(s.map(_parse_date))
+            elif step.kind == "dates":
+                out[col] = _parse_dates(s)
             elif step.kind == "nip":
                 out[col] = s.str.replace(r"\D", "", regex=True)
-        if step.kind == "duplikaty":
+        if step.kind == "duplicates":
             out = out.drop_duplicates().reset_index(drop=True)
     return out
 
@@ -179,20 +180,25 @@ def m_list(values) -> str:
 
 
 def steps_to_m(steps: list[Step], file_path: str, file_type: str,
-               encoding: str | None, separator: str | None) -> str:
-    """Zamienia listę kroków na gotowe zapytanie Power Query."""
+               encoding: str | None, separator: str | None, lang: str = "pl") -> str:
+    """Zamienia listę kroków na gotowe zapytanie Power Query.
+
+    Parametr lang decyduje o języku nazw kroków widocznych w Power BI
+    (panel Applied Steps), np. "Bez duplikatów" albo "Removed duplicates".
+    """
     lines: list[tuple[str, str]] = []   # (nazwa kroku, wyrażenie)
 
     # --- Źródło ---
+    source, headers = t("m_source", lang), t("m_headers", lang)
     if file_type == "excel":
-        lines.append(("Źródło", f"Excel.Workbook(File.Contents({m_text(file_path)}), null, true){{0}}[Data]"))
+        lines.append((source, f"Excel.Workbook(File.Contents({m_text(file_path)}), null, true){{0}}[Data]"))
     else:
         delimiter = '"#(tab)"' if separator == "\t" else m_text(separator)
         code = ENCODING_CODES.get(encoding, 65001)
-        lines.append(("Źródło", f"Csv.Document(File.Contents({m_text(file_path)}), "
-                                f"[Delimiter={delimiter}, Encoding={code}, QuoteStyle=QuoteStyle.Csv])"))
-    lines.append(("Nagłówki", f"Table.PromoteHeaders({m_name('Źródło')}, [PromoteAllScalars=true])"))
-    prev = "Nagłówki"
+        lines.append((source, f"Csv.Document(File.Contents({m_text(file_path)}), "
+                              f"[Delimiter={delimiter}, Encoding={code}, QuoteStyle=QuoteStyle.Csv])"))
+    lines.append((headers, f"Table.PromoteHeaders({m_name(source)}, [PromoteAllScalars=true])"))
+    prev = headers
 
     def add(name: str, expr: str) -> None:
         nonlocal prev
@@ -201,50 +207,49 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
 
     # --- Kroki czyszczenia ---
     for step in sorted(steps, key=lambda s: STEP_ORDER.index(s.kind)):
+        col = step.columns[0] if step.columns else ""
+
         if step.kind == "trim":
             pairs = ", ".join(f"{{{m_text(c)}, each if _ is text then Text.Trim(_) else _}}" for c in step.columns)
-            add("Usunięte spacje", f"Table.TransformColumns(PREV, {{{pairs}}})")
+            add(t("m_trim", lang), f"Table.TransformColumns(PREV, {{{pairs}}})")
 
-        elif step.kind == "puste":
+        elif step.kind == "nulls":
             placeholders = m_list(sorted(MISSING_PLACEHOLDERS | {""}))
-            add("Puste na null",
-                f"Table.TransformColumns(PREV, List.Transform({m_list(step.columns)}, (kolumna) => "
-                f"{{kolumna, (x) => if x is text and List.Contains({placeholders}, Text.Lower(Text.Trim(x))) "
+            add(t("m_nulls", lang),
+                f"Table.TransformColumns(PREV, List.Transform({m_list(step.columns)}, (col) => "
+                f"{{col, (x) => if x is text and List.Contains({placeholders}, Text.Lower(Text.Trim(x))) "
                 f"then null else x}}))")
 
-        elif step.kind == "warianty":
-            col = step.columns[0]
+        elif step.kind == "variants":
+            map_name = t("m_map", lang, col=col)
             mapping = ", ".join(f"{m_name(k)} = {m_text(v)}" for k, v in step.params["mapping"].items())
-            lines.append((f"Mapa: {col}", f"[{mapping}]"))
-            add(f"Ujednolicone: {col}",
+            lines.append((map_name, f"[{mapping}]"))
+            add(t("m_unified", lang, col=col),
                 f"Table.TransformColumns(PREV, {{{{{m_text(col)}, "
-                f"each if _ is text then Record.FieldOrDefault({m_name('Mapa: ' + col)}, _, _) else _}}}})")
+                f"each if _ is text then Record.FieldOrDefault({m_name(map_name)}, _, _) else _}}}})")
 
-        elif step.kind == "liczby":
-            col = step.columns[0]
+        elif step.kind == "numbers":
             m_type = "Int64.Type" if step.params["integer"] else "type number"
-            add(f"Bez spacji: {col}",
+            add(t("m_no_spaces", lang, col=col),
                 f'Table.TransformColumns(PREV, {{{{{m_text(col)}, '
                 f'each if _ is text then Text.Remove(_, {{" ", "#(00A0)"}}) else _}}}})')
-            add(f"Liczba: {col}",
+            add(t("m_number", lang, col=col),
                 f"Table.TransformColumnTypes(PREV, {{{{{m_text(col)}, {m_type}}}}}, {m_text(step.params['culture'])})")
 
-        elif step.kind == "daty":
-            col = step.columns[0]
-            add(f"Data: {col}",
+        elif step.kind == "dates":
+            add(t("m_date", lang, col=col),
                 f'Table.TransformColumns(PREV, {{{{{m_text(col)}, each if _ is text then ('
                 f'if Text.Contains(_, ".") then Date.FromText(_, [Format="d.M.yyyy"]) '
                 f'else if Text.Contains(_, "/") then Date.FromText(_, [Format="d/M/yyyy"]) '
                 f'else Date.FromText(_, [Format="yyyy-MM-dd"])) else _, type date}}}})')
 
         elif step.kind == "nip":
-            col = step.columns[0]
-            add(f"NIP: {col}",
+            add(t("m_nip", lang, col=col),
                 f'Table.TransformColumns(PREV, {{{{{m_text(col)}, '
                 f'each if _ is text then Text.Select(_, {{"0".."9"}}) else _, type text}}}})')
 
-        elif step.kind == "duplikaty":
-            add("Bez duplikatów", "Table.Distinct(PREV)")
+        elif step.kind == "duplicates":
+            add(t("m_distinct", lang), "Table.Distinct(PREV)")
 
     # --- Składanie całości ---
     body = ",\n".join(f"    {m_name(name)} = {expr}" for name, expr in lines)
