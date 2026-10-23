@@ -97,3 +97,102 @@ def test_power_query_code_in_both_languages():
     assert m_pl.startswith("let") and m_pl.rstrip().endswith('#"Bez duplikatów"')
     assert m_en.rstrip().endswith('#"Removed duplicates"')
     assert "Encoding=1250" in m_en
+
+
+# --- Układ szeroki (pliki w stylu GIOŚ) -------------------------------------------
+def _wide_excel():
+    """Mały plik w układzie GIOŚ: 3 wiersze nagłówka, stacje w kolumnach."""
+    import io
+    from datetime import datetime
+    rows = [
+        ["Kod stacji", "StA", "StB", "StC", "StOld"],
+        ["Wskaźnik", "PM10", "PM10", "PM10", "PM10"],
+        ["Jednostka", "ug/m3", "ug/m3", "ug/m3", "ug/m3"],
+        [datetime(2024, 1, 1), 10.5, 20.0, None, 7.0],
+        [datetime(2024, 1, 2), 55.0, 30.1, 12.0, 8.0],
+    ]
+    buf = io.BytesIO()
+    pd.DataFrame(rows).to_excel(buf, header=False, index=False, sheet_name="PM10")
+    return load_file(buf.getvalue(), "wide.xlsx")
+
+
+def test_detects_wide_layout():
+    from reshape import detect_wide_layout
+    layout = detect_wide_layout(_wide_excel().raw)
+    assert layout is not None
+    assert layout.data_start == 3 and layout.key_label == "Kod stacji"
+    assert layout.keys == ["StA", "StB", "StC", "StOld"]
+    assert set(layout.constants) == {"Wskaźnik", "Jednostka"}
+
+
+def test_normal_file_is_not_wide():
+    from reshape import detect_wide_layout
+    result, _ = _load()
+    assert detect_wide_layout(result.raw) is None
+
+
+def test_unpivot_skips_empty_cells():
+    from reshape import detect_wide_layout, unpivot
+    result = _wide_excel()
+    long = unpivot(result.raw, detect_wide_layout(result.raw), "pl")
+    assert list(long.columns) == ["Data", "Kod stacji", "Wartość", "Wskaźnik", "Jednostka"]
+    assert len(long) == 7                     # 8 komórek, jedna pusta
+    assert long["Wskaźnik"].eq("PM10").all()
+
+
+def test_old_codes_are_matched():
+    from reshape import check_codes
+    lookup = check_codes(pd.Series(["StA", "StB", "StOld", "Ghost"]),
+                         current=pd.Series(["StA", "StB", "StNew"]),
+                         old=pd.Series([None, None, "StOld"]))
+    assert lookup.matched == 2
+    assert lookup.old_code_mapping == {"StOld": "StNew"}
+    assert lookup.unmatched == ["Ghost"]
+
+
+def test_wide_power_query_code():
+    from reshape import detect_wide_layout
+    result = _wide_excel()
+    m = steps_to_m([], "C:\\data\\wide.xlsx", "excel", None, None, "en",
+                   sheet_name=result.sheet_name, layout=detect_wide_layout(result.raw))
+    assert '[Item="PM10", Kind="Sheet"]' in m
+    assert 'Table.UnpivotOtherColumns(#"Renamed columns", {"Date"}, "Kod stacji", "Value")' in m
+
+
+def test_text_parameter_named_key():
+    # Regresja: tekst z parametrem {key} (np. "Kod stacji") nie może psuć funkcji t().
+    from i18n import t
+    assert "Kod stacji" in t("wide_unpivot_label", "pl", key="Kod stacji")
+
+
+def test_wide_layout_with_comma_numbers_as_text():
+    # GIOŚ w części plików z 2018 r. zapisywał wartości jako tekst z przecinkiem.
+    import io
+    from datetime import datetime
+    from reshape import detect_wide_layout, unpivot
+    rows = [
+        ["Kod stacji", "StA", "StB", "StC"],
+        ["Wskaźnik", "BaP", "BaP", "BaP"],
+        [datetime(2018, 1, 1), "3,878", "0,5", None],
+        [datetime(2018, 1, 2), "1,25", "14,566", "2"],
+    ]
+    buf = io.BytesIO()
+    pd.DataFrame(rows).to_excel(buf, header=False, index=False, sheet_name="BaP")
+    result = load_file(buf.getvalue(), "bap.xlsx")
+    layout = detect_wide_layout(result.raw)
+    assert layout is not None and layout.decimal_comma
+    long = unpivot(result.raw, layout, "en")
+    assert long["Value"].tolist() == [3.878, 1.25, 0.5, 14.566, 2.0]
+    m = steps_to_m([], "C:\\data\\bap.xlsx", "excel", None, None, "en",
+                   sheet_name=result.sheet_name, layout=layout)
+    assert '{"Value", type number}}, "pl-PL")' in m
+
+
+def test_excel_with_numeric_headers():
+    # Regresja: Excel, którego nagłówki to liczby (1, 2, 3), nie może wywracać aplikacji.
+    import io
+    buf = io.BytesIO()
+    pd.DataFrame({1: ["a", "b"], 2: ["1,5", "2,5"]}).to_excel(buf, index=False)
+    result = load_file(buf.getvalue(), "numbers.xlsx")
+    assert list(result.df.columns) == ["1", "2"]
+    suggest_steps(result.df, profile_dataframe(result.df))

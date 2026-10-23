@@ -13,11 +13,11 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from i18n import t
-from profiling import (MISSING_PLACEHOLDERS, NUMBER_TYPES, THOUSANDS_SEP,
+from profiling import (DATE_TYPES, MISSING_PLACEHOLDERS, NUMBER_TYPES,
                        DatasetProfile, normalize_text, to_number)
 
 # Kolejność, w jakiej kroki są wykonywane (niezależnie od kolejności zaznaczania).
-STEP_ORDER = ["trim", "nulls", "variants", "numbers", "dates", "nip", "duplicates"]
+STEP_ORDER = ["trim", "nulls", "variants", "recode", "numbers", "dates", "nip", "duplicates"]
 
 
 @dataclass
@@ -43,9 +43,9 @@ class Step:
         p = self.params
         if self.kind == "trim":
             return t("step_trim_reason", lang, columns=", ".join(self.columns))
-        if self.kind == "variants":
+        if self.kind in ("variants", "recode"):
             examples = ", ".join(f"„{k}” → „{v}”" for k, v in list(p["mapping"].items())[:3])
-            return t("step_variants_reason", lang, n=len(p["mapping"]), examples=examples)
+            return t(f"step_{self.kind}_reason", lang, n=len(p["mapping"]), examples=examples)
         if self.kind == "numbers":
             return t("step_numbers_reason", lang, type=t("type_" + p["type"], lang), culture=p["culture"])
         if self.kind == "duplicates":
@@ -72,8 +72,13 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
     if trim_cols:
         steps.append(Step("trim", trim_cols))
 
-    # Puste komórki i "brak" -> null (zawsze proponujemy dla plików tekstowych)
-    if text_cols:
+    # Puste komórki i "brak" -> null. Proponujemy tylko, gdy jest co zamieniać:
+    # puste komórki (w CSV Power BI wczyta je jako pusty tekst) albo słowa typu "brak".
+    def _has_blanks(col: str) -> bool:
+        s = df[col]
+        return bool(s.isna().any() or s.dropna().str.strip().str.lower().isin(MISSING_PLACEHOLDERS).any())
+
+    if any(_has_blanks(c) for c in text_cols):
         steps.append(Step("nulls", text_cols))
 
     for col in text_cols:
@@ -84,7 +89,7 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
         values = values[~values.str.lower().isin(MISSING_PLACEHOLDERS)]
 
         # Warianty tej samej wartości ("Kraków" / "krakow" / "KRAKÓW")
-        if info.detected_type == "text" and "nip" not in col.lower() and 0 < values.nunique() <= 200:
+        if info.detected_type == "text" and "nip" not in str(col).lower() and 0 < values.nunique() <= 200:
             mapping = {}
             for _, group in values.groupby(values.map(normalize_text)):
                 counts = group.value_counts()
@@ -103,11 +108,11 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
             }))
 
         # Daty
-        if info.detected_type.startswith("date"):
+        if info.detected_type in DATE_TYPES | {"date_mixed"}:
             steps.append(Step("dates", [col]))
 
         # NIP - zostawiamy same cyfry
-        if "nip" in col.lower():
+        if "nip" in str(col).lower():
             steps.append(Step("nip", [col]))
 
     # Duplikaty
@@ -145,7 +150,7 @@ def apply_steps(df: pd.DataFrame, steps: list[Step]) -> pd.DataFrame:
             elif step.kind == "nulls":
                 is_missing = s.str.strip().str.lower().isin(MISSING_PLACEHOLDERS | {""})
                 out[col] = s.mask(is_missing)
-            elif step.kind == "variants":
+            elif step.kind in ("variants", "recode"):
                 out[col] = s.replace(step.params["mapping"])
             elif step.kind == "numbers":
                 numbers = to_number(s, step.params["type"])
@@ -180,7 +185,8 @@ def m_list(values) -> str:
 
 
 def steps_to_m(steps: list[Step], file_path: str, file_type: str,
-               encoding: str | None, separator: str | None, lang: str = "pl") -> str:
+               encoding: str | None, separator: str | None, lang: str = "pl",
+               sheet_name: str | None = None, layout=None) -> str:
     """Zamienia listę kroków na gotowe zapytanie Power Query.
 
     Parametr lang decyduje o języku nazw kroków widocznych w Power BI
@@ -191,14 +197,22 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
     # --- Źródło ---
     source, headers = t("m_source", lang), t("m_headers", lang)
     if file_type == "excel":
-        lines.append((source, f"Excel.Workbook(File.Contents({m_text(file_path)}), null, true){{0}}[Data]"))
+        # Arkusz wybieramy po nazwie - pozycja {0} mogłaby wskazać np. nazwaną tabelę.
+        item = f"{{[Item={m_text(sheet_name)}, Kind=\"Sheet\"]}}" if sheet_name else "{0}"
+        lines.append((source, f"Excel.Workbook(File.Contents({m_text(file_path)}), null, true){item}[Data]"))
     else:
         delimiter = '"#(tab)"' if separator == "\t" else m_text(separator)
         code = ENCODING_CODES.get(encoding, 65001)
         lines.append((source, f"Csv.Document(File.Contents({m_text(file_path)}), "
                               f"[Delimiter={delimiter}, Encoding={code}, QuoteStyle=QuoteStyle.Csv])"))
-    lines.append((headers, f"Table.PromoteHeaders({m_name(source)}, [PromoteAllScalars=true])"))
-    prev = headers
+    if layout is not None:
+        # Układ szeroki: zamiast zwykłego nagłówka odwracamy tabelę (patrz reshape.py).
+        from reshape import wide_to_m
+        lines.extend(wide_to_m(layout, lang, source))
+        prev = lines[-1][0]
+    else:
+        lines.append((headers, f"Table.PromoteHeaders({m_name(source)}, [PromoteAllScalars=true])"))
+        prev = headers
 
     def add(name: str, expr: str) -> None:
         nonlocal prev
@@ -220,11 +234,11 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
                 f"{{col, (x) => if x is text and List.Contains({placeholders}, Text.Lower(Text.Trim(x))) "
                 f"then null else x}}))")
 
-        elif step.kind == "variants":
-            map_name = t("m_map", lang, col=col)
+        elif step.kind in ("variants", "recode"):
+            map_name = t("m_map" if step.kind == "variants" else "m_old_codes", lang, col=col)
             mapping = ", ".join(f"{m_name(k)} = {m_text(v)}" for k, v in step.params["mapping"].items())
             lines.append((map_name, f"[{mapping}]"))
-            add(t("m_unified", lang, col=col),
+            add(t("m_unified" if step.kind == "variants" else "m_recoded", lang, col=col),
                 f"Table.TransformColumns(PREV, {{{{{m_text(col)}, "
                 f"each if _ is text then Record.FieldOrDefault({m_name(map_name)}, _, _) else _}}}})")
 

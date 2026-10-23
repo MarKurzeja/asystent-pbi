@@ -4,3 +4,7 @@ __pycache__/
 .pytest_cache/
 .env
 .streamlit/secrets.toml
+
+# Surowe dane GIOS (duze pliki) - instrukcja pobrania w README
+data/gios/
+.DS_Store

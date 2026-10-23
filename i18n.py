@@ -211,10 +211,77 @@ TEXTS: dict[str, dict[str, str]] = {
     "m_date": {"en": "Date: {col}", "pl": "Data: {col}"},
     "m_nip": {"en": "NIP: {col}", "pl": "NIP: {col}"},
     "m_distinct": {"en": "Removed duplicates", "pl": "Bez duplikatów"},
+    "m_old_codes": {"en": "Old codes: {col}", "pl": "Stare kody: {col}"},
+    "m_recoded": {"en": "Recoded: {col}", "pl": "Nowe kody: {col}"},
+    "m_wide_keys": {"en": "Column keys", "pl": "Klucze kolumn"},
+    "m_wide_data": {"en": "Data rows", "pl": "Wiersze danych"},
+    "m_wide_renamed": {"en": "Renamed columns", "pl": "Nazwy kolumn"},
+    "m_wide_unpivoted": {"en": "Unpivoted", "pl": "Odwrócona tabela"},
+    "m_added": {"en": "Added: {col}", "pl": "Dodano: {col}"},
+    "m_types": {"en": "Changed types", "pl": "Typy danych"},
+
+    # --- Typy natywne (kolumny, które już mają typ, np. z Excela) ---------------
+    "type_number_native": {"en": "number", "pl": "liczba"},
+    "type_date_native": {"en": "date", "pl": "data"},
+
+    # --- Układ szeroki (unpivot) ---------------------------------------------------
+    "col_name_date": {"en": "Date", "pl": "Data"},
+    "col_name_value": {"en": "Value", "pl": "Wartość"},
+    "wide_detected": {
+        "en": "**Wide layout detected:** the header takes {header_rows} rows and there are {n} value columns "
+              "(one column per „{key}”). Power BI works best with a long table: one row per date and „{key}”.",
+        "pl": "**Wykryto układ szeroki:** nagłówek zajmuje {header_rows} wierszy, a wartości są w {n} kolumnach "
+              "(osobna kolumna dla każdego „{key}”). Power BI najlepiej działa z tabelą długą: "
+              "jeden wiersz na datę i „{key}”.",
+    },
+    "wide_unpivot_label": {
+        "en": "Unpivot the table (one row per date and „{key}”)",
+        "pl": "Odwróć tabelę (jeden wiersz na datę i „{key}”)",
+    },
+    "wide_unpivot_note": {
+        "en": "Empty cells (no measurement) are skipped - Power Query's unpivot does the same, so the row counts match. "
+              "Constant header rows are kept as columns: {constants}.",
+        "pl": "Puste komórki (brak pomiaru) są pomijane - tak samo działa odwracanie tabeli w Power Query, "
+              "więc liczba wierszy się zgadza. Stałe wiersze nagłówka zostają jako kolumny: {constants}.",
+    },
+
+    # --- Słownik kodów -------------------------------------------------------------
+    "dict_header": {"en": "Check codes against a dictionary (optional)", "pl": "Sprawdź kody w słowniku (opcjonalnie)"},
+    "dict_caption": {
+        "en": "Upload a reference file (e.g. station metadata) to check that every code in your data can be matched. "
+              "Codes that don't match will silently disappear when you filter by city or region in Power BI.",
+        "pl": "Wgraj plik słownikowy (np. metadane stacji), żeby sprawdzić, czy każdy kod z danych da się dopasować. "
+              "Kody bez dopasowania po cichu „znikną” przy filtrowaniu po mieście czy regionie w Power BI.",
+    },
+    "dict_upload": {"en": "Dictionary file", "pl": "Plik słownika"},
+    "dict_sheet": {"en": "Sheet", "pl": "Arkusz"},
+    "dict_data_col": {"en": "Column with codes in your data", "pl": "Kolumna z kodami w danych"},
+    "dict_key_col": {"en": "Column with current codes in the dictionary", "pl": "Kolumna z aktualnymi kodami w słowniku"},
+    "dict_old_col": {"en": "Column with old codes (optional)", "pl": "Kolumna ze starymi kodami (opcjonalnie)"},
+    "dict_none": {"en": "— none —", "pl": "— brak —"},
+    "dict_codes": {"en": "Codes in data", "pl": "Kody w danych"},
+    "dict_matched": {"en": "Found in dictionary", "pl": "Znalezione w słowniku"},
+    "dict_via_old": {"en": "Matched by old code", "pl": "Dopasowane po starym kodzie"},
+    "dict_unmatched": {"en": "Not found", "pl": "Nieznalezione"},
+    "dict_unmatched_list": {
+        "en": "Codes not found anywhere in the dictionary: {examples}. Rows with these codes will not match "
+              "any entry in Power BI - check them manually or label them as unknown.",
+        "pl": "Kody, których nie ma w słowniku: {examples}. Wiersze z tymi kodami nie połączą się "
+              "z żadnym wpisem w Power BI - sprawdź je ręcznie albo oznacz jako nieznane.",
+    },
+    "dict_all_ok": {"en": "Every code in the data matches the dictionary.", "pl": "Wszystkie kody z danych są w słowniku."},
+    "step_recode_label": {
+        "en": "Replace old codes with current ones in „{col}”",
+        "pl": "Zamień stare kody na aktualne w kolumnie „{col}”",
+    },
+    "step_recode_reason": {
+        "en": "{n} codes appear in the dictionary only as old codes, e.g. {examples}.",
+        "pl": "{n} kodów występuje w słowniku tylko jako stare kody, np. {examples}.",
+    },
 }
 
 
-def t(key: str, lang: str, **params) -> str:
+def t(key: str, lang: str, /, **params) -> str:
     """Zwraca tekst w wybranym języku i wstawia parametry w miejsca {nazwa}."""
     text = TEXTS[key][lang]
     return text.format(**params) if params else text

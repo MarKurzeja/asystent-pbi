@@ -122,7 +122,37 @@ def _examples(values: pd.Series, k: int = 3) -> str:
 
 
 # --- Profil jednej kolumny ------------------------------------------------------
+def _profile_native(series: pd.Series) -> ColumnProfile:
+    """Kolumna, która już ma prawdziwy typ (liczby lub daty, np. z Excela).
+
+    Tu nie ma czego rozpoznawać z tekstu - sprawdzamy tylko braki,
+    wartości odstające i ujemne.
+    """
+    total = len(series)
+    values = series.dropna()
+    missing_pct = 1 - len(values) / total if total else 0.0
+    issues: list[Issue] = []
+    if pd.api.types.is_datetime64_any_dtype(series):
+        detected = "date_native"
+    else:
+        detected = "number_native"
+        if len(values) >= 8:
+            q1, q3 = values.quantile([0.25, 0.75])
+            iqr = q3 - q1
+            outliers = values[(values < q1 - 3 * iqr) | (values > q3 + 3 * iqr)]
+            if len(outliers):
+                issues.append(Issue("issue_outliers", {"n": len(outliers), "example": f"{outliers.iloc[0]:g}"}))
+        if (values < 0).any():
+            issues.append(Issue("issue_negatives", {"n": int((values < 0).sum())}))
+    samples = [str(v)[:10] if detected == "date_native" else f"{v:g}" for v in values.unique()[:5]]
+    return ColumnProfile(series.name, detected, 1.0, missing_pct, int(values.nunique()), samples, issues)
+
+
 def profile_column(series: pd.Series) -> ColumnProfile:
+    if pd.api.types.is_datetime64_any_dtype(series) or (
+            pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(series)):
+        return _profile_native(series)
+
     total = len(series)
     non_null = series.dropna().astype(str)
     missing_pct = 1 - len(non_null) / total if total else 0.0

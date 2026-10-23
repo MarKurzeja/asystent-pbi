@@ -29,6 +29,10 @@ class LoadResult:
     file_type: str          # "csv" albo "excel"
     encoding: str | None    # tylko dla CSV
     separator: str | None   # tylko dla CSV
+    # Surowy arkusz Excela bez nagłówka - potrzebny, gdy nagłówek zajmuje kilka
+    # wierszy (np. pliki GIOŚ). Wtedy reshape.py sam ustala, gdzie są dane.
+    raw: pd.DataFrame | None = None
+    sheet_name: str | None = None
 
 
 def detect_encoding(raw: bytes) -> str:
@@ -62,8 +66,17 @@ def load_file(raw: bytes, filename: str) -> LoadResult:
 
     if name.endswith((".xlsx", ".xls")):
         # Excel przechowuje typy i kodowanie sam, więc nic nie zgadujemy.
-        df = pd.read_excel(io.BytesIO(raw))
-        return LoadResult(df=df, file_type="excel", encoding=None, separator=None)
+        # Wczytujemy pierwszy arkusz dwa razy: zwyczajnie (pierwszy wiersz = nagłówek)
+        # i "na surowo", żeby móc rozpoznać nagłówek zajmujący kilka wierszy.
+        book = pd.ExcelFile(io.BytesIO(raw))
+        sheet = book.sheet_names[0]
+        df = book.parse(sheet)
+        # Nagłówki w Excelu bywają liczbami (np. 1, 2, 3) - zamieniamy je na tekst,
+        # bo dalej traktujemy nazwy kolumn jak napisy.
+        df.columns = [str(c) for c in df.columns]
+        raw_sheet = book.parse(sheet, header=None)
+        return LoadResult(df=df, file_type="excel", encoding=None, separator=None,
+                          raw=raw_sheet, sheet_name=sheet)
 
     encoding = detect_encoding(raw)
     text = raw.decode(encoding)

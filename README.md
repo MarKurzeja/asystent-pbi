@@ -17,6 +17,18 @@ The interface is available in **English and Polish**.
 4. **Power Query code**: paste it into Power BI (*Get data → Blank query → Advanced Editor*).
    From then on, Power BI cleans every new version of the file on refresh.
 
+### Wide files with multi-row headers
+
+Many official Polish datasets (e.g. air quality data from GIOŚ) are published in a *wide* layout:
+several header rows and one column per measuring station. The app detects this automatically,
+**unpivots** the table into a long format (one row per date and station) and generates the matching
+Power Query steps (`Table.UnpivotOtherColumns`).
+
+It can also **check codes against a dictionary** (e.g. station metadata). GIOŚ has renamed some stations
+over the years: in the 2019 PM10 file, 16 of 179 station codes are missing from the current metadata -
+6 can be matched through the *old code* column, 10 cannot be matched at all. Without this check those
+measurements would silently disappear when filtering by city in Power BI.
+
 ## Result in Power BI
 
 The generated code runs in Power BI Desktop without errors - every column passes the *Column quality* check
@@ -51,6 +63,18 @@ streamlit run app.py               # opens the app in your browser
 python -m pytest                   # runs the automated tests
 ```
 
+### Air quality data (GIOŚ)
+
+Raw files are not stored in the repository (they are large). Download the yearly archives from
+[powietrze.gios.gov.pl/pjp/archives](https://powietrze.gios.gov.pl/pjp/archives), unzip them and place
+the `PM10_24g`, `PM25_24g` and `BaP(PM10)_24g` files plus the station metadata in `data/gios/`.
+
+## Known limitations
+
+- Dates written with slashes are read as day/month/year (Polish and European convention).
+  US-style month/day dates are not supported - `03/05/2025` cannot be told apart from 3 May.
+- Wide-layout detection works for Excel files whose first column contains dates.
+
 ## Project structure
 
 | File | Purpose |
@@ -59,6 +83,7 @@ python -m pytest                   # runs the automated tests
 | `loading.py` | file loading, encoding and separator detection |
 | `profiling.py` | column profiling and data quality rules |
 | `cleaning.py` | cleaning steps (pandas) and Power Query code generation (M) |
+| `reshape.py` | wide-layout detection, unpivot and dictionary (lookup) checks |
 | `i18n.py` | English and Polish texts |
 | `tests/` | automated tests (pytest) |
 | `data/generate_test_data.py` | generator of messy test data |
@@ -69,7 +94,8 @@ python -m pytest                   # runs the automated tests
 - [x] Cleaning plan with before/after preview
 - [x] Power Query code generation, tested in Power BI Desktop
 - [x] English and Polish interface
-- [ ] Power BI sales dashboard built on the cleaned data
+- [x] Wide files with multi-row headers (unpivot) and dictionary checks
+- [ ] Power BI dashboard: air quality in Kraków vs other Polish cities (GIOŚ data, 2018-2024)
 - [ ] AI suggestions for additional cleaning steps (e.g. filling a missing city from the postcode)
 
 ---
