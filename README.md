@@ -53,17 +53,48 @@ The report is in [`smog.pbix`](smog.pbix) (Power BI Desktop), and all pages are 
 ### 2. City vs national average
 ![City vs Poland page](docs/dashboard-vs-poland.png)
 
-### 3. Station map
+### 3. Analysis: did the coal ban in Kraków work?
+![Did the ban work page](docs/dashboard-ban-effect.png)
+
+**Question.** Did the ban on burning coal and wood in Kraków (in force since September 2019) improve air
+quality more than in the rest of Poland?
+
+**Method.** Average PM10 in the **heating season** (October-March, when the ban matters) **before and after
+the ban**, in Kraków and in all other cities. The difference between the two changes is the estimated
+effect of the ban - a simplified *difference-in-differences* design, with the rest of Poland as the control group.
+
+| Heating-season PM10 (µg/m³) | Before the ban | After the ban | Change |
+|---|---|---|---|
+| Kraków | 50 | 35 | **-30%** |
+| Rest of Poland | 39 | 28 | **-28%** |
+| **Estimated effect of the ban** | | | **≈ -3 percentage points** |
+
+**Interpretation.** Kraków improved only slightly more than the rest of the country, so the 2018-2024 data
+shows no large additional effect of the ban itself. Kraków had been replacing coal stoves for years before
+2019, so much of the improvement probably happened before this data starts. The similar drop across Poland
+points to common factors as well: weather and nationwide programmes.
+
+**Limitations.** Only about 1.5 heating seasons before the ban, a changing set of stations, no weather data.
+
+**Recommendations**
+- **Evaluate policies against a control group, not only a base year.** The 72% drop in smog days looked like
+  a big success of the ban, but most of that change happened elsewhere too.
+- **Kraków still has ~25% higher winter PM10 than the rest of Poland.** Further action could target transport
+  and industry - the worst station in 2024 was ul. Bulwarowa in Nowa Huta, the industrial district.
+- **Benzo(a)pyrene is still above the target value (1.11 ng/m³).** Pollution drifting in from municipalities
+  around Kraków, where the ban does not apply, is worth investigating.
+
+### 4. Station map
 ![Station map page](docs/dashboard-map.png)
 
-### 4. Data quality
+### 5. Data quality
 ![Data quality page](docs/dashboard-data-quality.png)
 
 ### Key findings (Kraków)
 
 - **Days above the PM10 daily limit (50 µg/m³) fell from ~76 in 2018 to ~21 in 2024 (-72%).**
   Since 2022 Kraków has stayed below the EU limit of 35 days per year.
-- **The national average fell by a similar proportion**, and many cities improved even more
+- **The national average fell by a similar proportion** (see the analysis above), and many cities improved even more
   (Elbląg -95%, Warszawa -89%, Katowice -81%). The 2019 ban on solid-fuel heating in Kraków was
   probably not the only driver: weather and nationwide programmes matter too.
 - Air quality follows the **heating season**: monthly PM10 is roughly twice as high in winter as in summer.
@@ -154,5 +185,9 @@ Na danych GIOŚ (ok. 960 tys. pomiarów z 296 stacji, lata 2018-2024) powstał *
 o jakości powietrza w polskich miastach. Najważniejszy wniosek: w Krakowie liczba dni z przekroczeniem
 normy PM10 spadła o ok. 72%, ale średnia dla całej Polski spadła w podobnym stopniu, a wiele miast
 poprawiło się jeszcze bardziej.
+
+Analiza „przed i po” zakazie palenia węglem (sezon grzewczy, Kraków vs reszta Polski) pokazuje, że PM10
+spadło w Krakowie o 30%, a w reszcie kraju o 28%. Szacowany efekt samego zakazu to więc tylko ok. 3 punkty
+procentowe. Rekomendacja: oceniać takie polityki przez porównanie z grupą kontrolną, a nie tylko z rokiem bazowym.
 
 Instrukcja uruchomienia, zrzuty dashboardu i opis plików znajdują się w części angielskiej powyżej.
