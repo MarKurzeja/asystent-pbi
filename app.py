@@ -1,10 +1,10 @@
 """
-Data Assistant for Power BI / Asystent danych dla Power BI.
+Data Assistant for Power BI - Streamlit app.
 
-Raport jakości danych, plan czyszczenia i gotowy kod Power Query.
-Interfejs po angielsku i po polsku (przełącznik w panelu bocznym).
+Data quality report, cleaning plan and ready-to-use Power Query code.
+English and Polish interface (switch in the sidebar).
 
-Uruchom w terminalu:
+Run:
     streamlit run app.py
 """
 
@@ -19,11 +19,11 @@ from reshape import check_codes, detect_wide_layout, unpivot
 
 st.set_page_config(page_title="Data Assistant for Power BI", layout="wide")
 
-# --- Wybór języka ----------------------------------------------------------------
+# --- Language -----------------------------------------------------------------
 lang = st.sidebar.radio(
     "Language / Język",
     options=list(LANGUAGES),          # ["en", "pl"]
-    format_func=LANGUAGES.get,        # pokazujemy "English" / "Polski"
+    format_func=LANGUAGES.get,        # shows "English" / "Polski"
 )
 
 st.title(t("app_title", lang))
@@ -35,10 +35,10 @@ if uploaded is None:
     st.info(t("no_file_hint", lang))
     st.stop()
 
-# --- Wczytanie ----------------------------------------------------------------
+# --- Loading ------------------------------------------------------------------
 try:
     result = load_file(uploaded.getvalue(), uploaded.name)
-except Exception as e:  # pokazujemy błąd zrozumiale, zamiast "wywalać" aplikację
+except Exception as e:  # show a readable message instead of crashing
     st.error(t("load_error", lang, error=e))
     st.stop()
 
@@ -50,7 +50,7 @@ if result.file_type == "csv":
 else:
     st.success(t("loaded_excel", lang))
 
-# --- Układ szeroki (nagłówek na kilka wierszy, np. pliki GIOŚ) ----------------
+# --- Wide layout (multi-row header, e.g. GIOŚ files) --------------------------
 layout = detect_wide_layout(result.raw) if result.file_type == "excel" else None
 use_unpivot = False
 if layout is not None:
@@ -63,7 +63,7 @@ if layout is not None:
 with st.expander(t("preview_raw", lang)):
     st.dataframe(df.head(20), hide_index=True)
 
-# --- Profilowanie ---------------------------------------------------------------
+# --- Profiling ----------------------------------------------------------------
 profile = profile_dataframe(df)
 
 c1, c2, c3, c4 = st.columns(4)
@@ -99,7 +99,7 @@ for col in columns_with_issues:
         for issue in col.issues:
             st.markdown(f"- {issue.render(lang)}")
 
-# --- Eksport raportu --------------------------------------------------------------
+# --- Report export ------------------------------------------------------------
 report = pd.DataFrame(
     [{t("report_col_column", lang): c.name,
       t("report_col_type", lang): t("type_" + c.detected_type, lang),
@@ -108,19 +108,19 @@ report = pd.DataFrame(
 )
 st.download_button(
     t("download_report", lang),
-    report.to_csv(index=False, sep=";").encode("utf-8-sig"),  # utf-8-sig: Excel poprawnie pokaże polskie znaki
+    report.to_csv(index=False, sep=";").encode("utf-8-sig"),  # utf-8-sig: Excel displays Polish characters correctly
     file_name=t("report_file", lang),
     mime="text/csv",
 )
 
-# --- Plan czyszczenia -----------------------------------------------------------
+# --- Cleaning plan ------------------------------------------------------------
 st.divider()
 st.header(t("plan_header", lang))
 st.caption(t("plan_caption", lang))
 
 steps = suggest_steps(df, profile)
 
-# --- Słownik kodów (opcjonalnie) ---------------------------------------------------
+# --- Code dictionary (optional) -----------------------------------------------
 with st.expander(t("dict_header", lang)):
     st.caption(t("dict_caption", lang))
     dict_file = st.file_uploader(t("dict_upload", lang), type=["xlsx", "xls", "csv"], key="dict_file")
@@ -166,7 +166,7 @@ for step in steps:
 
 st.info(t("plan_outliers_note", lang))
 
-# --- Podgląd przed i po -----------------------------------------------------------
+# --- Before/after preview -----------------------------------------------------
 cleaned = apply_steps(df, chosen)
 
 st.subheader(t("preview_header", lang))
@@ -180,7 +180,7 @@ with tab_before:
 with tab_after:
     st.dataframe(cleaned.head(20), hide_index=True)
 
-# --- Kod Power Query --------------------------------------------------------------
+# --- Power Query code ---------------------------------------------------------
 st.divider()
 st.header(t("code_header", lang))
 file_path = st.text_input(

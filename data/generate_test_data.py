@@ -1,13 +1,13 @@
 """
-Generuje celowo "brudny" plik z zamówieniami sklepu internetowego.
-Uruchom: python data/generate_test_data.py
+Generates a deliberately messy file of online-shop orders.
+Run: python data/generate_test_data.py
 
-Plik ma typowe problemy polskich danych:
-- kodowanie Windows-1250 i średnik jako separator,
-- daty w różnych formatach,
-- kwoty z przecinkiem dziesiętnym i spacjami tysięcy,
-- warianty nazw miast, zbędne spacje, braki, duplikaty, wartości odstające,
-- numery NIP w różnych formatach, część z błędną cyfrą kontrolną.
+The file contains typical problems of Polish data:
+- Windows-1250 encoding and a semicolon separator,
+- dates in several formats,
+- amounts with a decimal comma and space as thousands separator,
+- city spelling variants, extra spaces, missing values, duplicates, outliers,
+- NIP (tax ID) numbers in several formats, some with a wrong check digit.
 """
 
 import csv
@@ -15,7 +15,7 @@ import random
 from datetime import date, timedelta
 from pathlib import Path
 
-random.seed(42)  # stałe ziarno -> za każdym razem ten sam plik
+random.seed(42)  # fixed seed -> the same file every time
 
 CITIES = ["Kraków", "Warszawa", "Gdańsk", "Wrocław", "Łódź", "Poznań"]
 CITY_TYPOS = {"Kraków": ["krakow", "KRAKÓW", "Krakow "], "Łódź": ["Lodz", "łódź"], "Wrocław": ["Wroclaw"]}
@@ -29,17 +29,17 @@ NIP_WEIGHTS = (6, 5, 7, 2, 3, 4, 5, 6, 7)
 
 
 def make_nip() -> str:
-    """Losuje poprawny NIP (10 cyfr, ostatnia to cyfra kontrolna)."""
+    """Generates a valid NIP (10 digits, the last one is the check digit)."""
     while True:
         digits = [random.randint(1, 9)] + [random.randint(0, 9) for _ in range(8)]
         check = sum(d * w for d, w in zip(digits, NIP_WEIGHTS)) % 11
-        if check != 10:  # 10 nie może być cyfrą kontrolną - losujemy jeszcze raz
+        if check != 10:  # 10 cannot be a check digit - draw again
             return "".join(map(str, digits + [check]))
 
 
 def fmt_nip(nip: str) -> str:
-    """Zapisuje NIP w jednym z formatów spotykanych w prawdziwych plikach."""
-    if random.random() < 0.05:  # 5% NIP-ów z literówką (zmieniona ostatnia cyfra)
+    """Formats a NIP in one of the styles found in real files."""
+    if random.random() < 0.05:  # 5% of NIPs with a typo (last digit changed)
         nip = nip[:9] + str((int(nip[9]) + 1) % 10)
     style = random.choices(["plain", "dashes", "pl"], weights=[60, 30, 10])[0]
     if style == "dashes":
@@ -49,7 +49,7 @@ def fmt_nip(nip: str) -> str:
     return nip
 
 
-CUSTOMER_NIPS = {i: make_nip() for i in range(1, 121)}  # każdy klient ma swój NIP
+CUSTOMER_NIPS = {i: make_nip() for i in range(1, 121)}  # one NIP per customer
 
 
 def fmt_date(d: date) -> str:
@@ -71,7 +71,7 @@ for i in range(1, 301):
     customer = random.randint(1, 120)
     qty = random.randint(1, 4)
     if random.random() < 0.01:
-        qty = 400  # błąd wprowadzania - wartość odstająca
+        qty = 400  # data entry error - an outlier
     rows.append({
         "id_zamowienia": f"ZAM-{i:04d}",
         "data_zamowienia": fmt_date(start + timedelta(days=random.randint(0, 270))),
@@ -84,7 +84,7 @@ for i in range(1, 301):
         "nip_klienta": fmt_nip(CUSTOMER_NIPS[customer]),
     })
 
-# Duplikaty: kilka zamówień wpisanych dwa razy
+# Duplicates: a few orders entered twice
 rows += random.sample(rows, 6)
 random.shuffle(rows)
 
@@ -94,4 +94,4 @@ with open(out, "w", encoding="cp1250", newline="") as f:
     writer.writeheader()
     writer.writerows(rows)
 
-print(f"Zapisano {len(rows)} wierszy do {out}")
+print(f"Saved {len(rows)} rows to {out}")

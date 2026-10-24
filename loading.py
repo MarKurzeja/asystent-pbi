@@ -1,12 +1,11 @@
 """
-Wczytywanie plików CSV i Excel.
+Loading CSV and Excel files.
 
-Polskie pliki CSV często mają dwie pułapki:
-1. kodowanie Windows-1250 (cp1250) zamiast UTF-8 -> "ą", "ł" zamieniają się w krzaczki,
-2. średnik jako separator, bo przecinek jest separatorem dziesiętnym ("12,50").
+Polish CSV files have two common traps:
+1. Windows-1250 (cp1250) encoding instead of UTF-8 -> "ą", "ł" turn into garbage,
+2. a semicolon separator, because the comma is the decimal separator ("12,50").
 
-Ten moduł sam wykrywa jedno i drugie, a wynik zwraca razem z informacją,
-co wykrył - żeby użytkownik wiedział, co się stało z jego plikiem.
+Both are detected automatically and reported back, so the user knows how the file was read.
 """
 
 import csv
@@ -16,63 +15,63 @@ from dataclasses import dataclass
 import pandas as pd
 from charset_normalizer import from_bytes
 
-# Kolejność ma znaczenie: najpierw próbujemy najczęstszych kodowań.
+# Order matters: the most common encodings are tried first.
 CANDIDATE_ENCODINGS = ["utf-8-sig", "cp1250", "iso-8859-2"]
 CANDIDATE_SEPARATORS = [";", ",", "\t", "|"]
 
 
 @dataclass
 class LoadResult:
-    """Wczytana tabela + informacje o tym, jak ją wczytaliśmy."""
+    """Loaded table plus details of how it was read."""
 
     df: pd.DataFrame
-    file_type: str          # "csv" albo "excel"
-    encoding: str | None    # tylko dla CSV
-    separator: str | None   # tylko dla CSV
-    # Surowy arkusz Excela bez nagłówka - potrzebny, gdy nagłówek zajmuje kilka
-    # wierszy (np. pliki GIOŚ). Wtedy reshape.py sam ustala, gdzie są dane.
+    file_type: str          # "csv" or "excel"
+    encoding: str | None    # CSV only
+    separator: str | None   # CSV only
+    # Raw Excel sheet without a header - needed when the header spans several
+    # rows (e.g. GIOŚ files); reshape.py then finds where the data starts.
     raw: pd.DataFrame | None = None
     sheet_name: str | None = None
 
 
 def detect_encoding(raw: bytes) -> str:
-    """Zwraca nazwę kodowania, w którym plik da się poprawnie odczytać."""
+    """Returns an encoding that decodes the file without errors."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             raw.decode(enc)
             return enc
         except UnicodeDecodeError:
             continue
-    # Gdy żadne nie pasuje, pytamy bibliotekę, która zgaduje statystycznie.
+    # Fall back to statistical detection.
     best = from_bytes(raw).best()
     return best.encoding if best else "utf-8"
 
 
 def detect_separator(text: str) -> str:
-    """Zgaduje separator na podstawie pierwszych linii pliku."""
+    """Detects the separator from the first lines of the file."""
     sample = "\n".join(text.splitlines()[:20])
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters="".join(CANDIDATE_SEPARATORS))
         return dialect.delimiter
     except csv.Error:
-        # Plan B: wybieramy znak, który występuje najczęściej w pierwszej linii.
+        # Fallback: the candidate that appears most often in the first line.
         first_line = text.splitlines()[0] if text else ""
         return max(CANDIDATE_SEPARATORS, key=first_line.count)
 
 
 def load_file(raw: bytes, filename: str) -> LoadResult:
-    """Wczytuje plik z bajtów (tak dostajemy go z formularza w Streamlit)."""
+    """Loads a file from bytes (as received from the Streamlit uploader)."""
     name = filename.lower()
 
     if name.endswith((".xlsx", ".xls")):
-        # Excel przechowuje typy i kodowanie sam, więc nic nie zgadujemy.
-        # Wczytujemy pierwszy arkusz dwa razy: zwyczajnie (pierwszy wiersz = nagłówek)
-        # i "na surowo", żeby móc rozpoznać nagłówek zajmujący kilka wierszy.
+        # Excel stores types and encoding itself, so nothing needs guessing.
+        # The first sheet is read twice: normally (first row = header) and raw,
+        # to detect headers that span several rows.
         book = pd.ExcelFile(io.BytesIO(raw))
         sheet = book.sheet_names[0]
         df = book.parse(sheet)
-        # Nagłówki w Excelu bywają liczbami (np. 1, 2, 3) - zamieniamy je na tekst,
-        # bo dalej traktujemy nazwy kolumn jak napisy.
+        # Excel headers can be numbers (e.g. 1, 2, 3) - convert them to strings,
+        # because column names are treated as text downstream.
         df.columns = [str(c) for c in df.columns]
         raw_sheet = book.parse(sheet, header=None)
         return LoadResult(df=df, file_type="excel", encoding=None, separator=None,
@@ -82,10 +81,10 @@ def load_file(raw: bytes, filename: str) -> LoadResult:
     text = raw.decode(encoding)
     separator = detect_separator(text)
 
-    # dtype=str: celowo wczytujemy wszystko jako tekst. Dzięki temu nic nie
-    # zostanie "po cichu" przekonwertowane - typy wykrywamy sami w profilowaniu.
+    # dtype=str: read everything as text on purpose, so nothing is silently
+    # converted - types are detected later, in profiling.
     df = pd.read_csv(io.StringIO(text), sep=separator, dtype=str, keep_default_na=False)
 
-    # Puste napisy i same spacje traktujemy jako brak danych.
+    # Treat empty and whitespace-only strings as missing.
     df = df.replace(r"^\s*$", pd.NA, regex=True)
     return LoadResult(df=df, file_type="csv", encoding=encoding, separator=separator)

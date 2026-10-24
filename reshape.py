@@ -1,21 +1,20 @@
 """
-Pliki w "układzie szerokim" z nagłówkiem na kilka wierszy.
+Wide-layout files with a multi-row header.
 
-Przykład - plik GIOŚ z pomiarami PM10:
+Example - a GIOŚ file with PM10 measurements:
 
     Nr                1             2             ...
-    Kod stacji        DsGlogWiStwo  DsJaworMOB    ...   <- wiersz z kluczami
-    Wskaźnik          PM10          PM10          ...   <- wartość stała
-    Jednostka         ug/m3         ug/m3         ...   <- wartość stała
-    2019-01-01        13.71         13.15         ...   <- tu zaczynają się dane
+    Kod stacji        DsGlogWiStwo  DsJaworMOB    ...   <- key row
+    Wskaźnik          PM10          PM10          ...   <- constant
+    Jednostka         ug/m3         ug/m3         ...   <- constant
+    2019-01-01        13.71         13.15         ...   <- data starts here
     2019-01-02         8.28         11.26         ...
 
-Ludziom wygodnie czyta się taką tabelę, ale Power BI potrzebuje układu
-"długiego": jeden wiersz = jedna data, jedna stacja, jedna wartość.
-Ten moduł:
-1. rozpoznaje taki układ (detect_wide_layout),
-2. odwraca tabelę w pandas (unpivot) - do podglądu,
-3. generuje ten sam krok w języku M (wide_to_m) - dla Power BI.
+This layout is easy for people to read, but Power BI needs a long format:
+one row = one date, one station, one value. This module:
+1. detects the layout (detect_wide_layout),
+2. unpivots the table in pandas (unpivot) - for the preview,
+3. generates the same step in M (wide_to_m) - for Power BI.
 """
 
 import re
@@ -26,21 +25,21 @@ import pandas as pd
 
 from i18n import t
 
-MAX_HEADER_ROWS = 20      # nagłówek dłuższy niż 20 wierszy uznajemy za nietypowy
-MIN_VALUE_COLUMNS = 3     # układ szeroki ma sens dopiero przy kilku kolumnach z wartościami
+MAX_HEADER_ROWS = 20      # headers longer than 20 rows are treated as unusual
+MIN_VALUE_COLUMNS = 3     # a wide layout needs several value columns
 DATE_TEXT = re.compile(r"^\d{1,2}[./]\d{1,2}[./]\d{4}$|^\d{4}-\d{2}-\d{2}")
-# Liczba zapisana jako tekst z przecinkiem, np. "3,878" (tak GIOŚ zapisywał część plików do 2018 r.)
+# Number stored as text with a decimal comma, e.g. "3,878" (some GIOŚ files up to 2018)
 COMMA_NUMBER = re.compile(r"^-?\d+(,\d+)?$")
 
 
 @dataclass
 class WideLayout:
-    data_start: int                  # numer wiersza, od którego zaczynają się dane
-    key_row: int                     # wiersz z nazwami kolumn (np. kodami stacji)
-    key_label: str                   # jego etykieta, np. "Kod stacji"
-    keys: list[str]                  # same klucze, np. ["DsGlogWiStwo", ...]
-    constants: dict[str, int] = field(default_factory=dict)  # etykieta -> wiersz, np. {"Wskaźnik": 2}
-    decimal_comma: bool = False      # True, gdy wartości są tekstem z przecinkiem ("3,878")
+    data_start: int                  # row where the data starts
+    key_row: int                     # row with column keys (e.g. station codes)
+    key_label: str                   # its label, e.g. "Kod stacji"
+    keys: list[str]                  # the keys, e.g. ["DsGlogWiStwo", ...]
+    constants: dict[str, int] = field(default_factory=dict)  # label -> row, e.g. {"Wskaźnik": 2}
+    decimal_comma: bool = False      # True when values are text with a decimal comma ("3,878")
 
     @property
     def header_rows(self) -> int:
@@ -62,22 +61,21 @@ def _is_number(value) -> bool:
 
 
 def detect_wide_layout(raw: pd.DataFrame | None) -> WideLayout | None:
-    """Sprawdza, czy surowy arkusz ma nagłówek na kilka wierszy i kolumny z wartościami.
+    """Detects a raw sheet with a multi-row header and value columns.
 
-    Zasady (celowo proste i przewidywalne):
-    - pierwsza kolumna: najpierw etykiety (tekst), potem daty - pierwsza data to początek danych,
-    - wśród wierszy nagłówka szukamy takiego, w którym każda kolumna ma inną, niepustą wartość
-      (to klucze, np. kody stacji),
-    - wiersze nagłówka z jedną wartością we wszystkich kolumnach to stałe (np. "Wskaźnik: PM10"),
-    - w części z danymi przeważają liczby.
-    Jeśli któryś warunek nie jest spełniony, zwracamy None i plik traktujemy zwyczajnie.
+    Rules (deliberately simple and predictable):
+    - first column: labels (text) first, then dates - the first date marks the start of data,
+    - one header row has a distinct, non-empty value in every column (the keys, e.g. station codes),
+    - header rows with a single value across all columns are constants (e.g. "Wskaźnik: PM10"),
+    - the data body is mostly numeric.
+    If any rule fails, None is returned and the file is treated as a normal table.
     """
     if raw is None or raw.shape[1] < MIN_VALUE_COLUMNS + 1 or raw.shape[0] < 3:
         return None
 
     first_col = raw.iloc[:, 0].tolist()
     data_start = next((i for i, v in enumerate(first_col[:MAX_HEADER_ROWS + 1]) if _is_date(v)), None)
-    if not data_start:   # None albo 0 (brak wierszy nagłówka)
+    if not data_start:   # None or 0 (no header rows)
         return None
 
     key_row, constants = None, {}
@@ -93,7 +91,7 @@ def detect_wide_layout(raw: pd.DataFrame | None) -> WideLayout | None:
     if key_row is None:
         return None
 
-    body = raw.iloc[data_start:, 1:].stack().dropna()   # tylko niepuste komórki
+    body = raw.iloc[data_start:, 1:].stack().dropna()   # non-empty cells only
     if body.empty:
         return None
     numeric_share = body.map(_is_number).mean()
@@ -112,15 +110,15 @@ def detect_wide_layout(raw: pd.DataFrame | None) -> WideLayout | None:
 
 
 def column_names(layout: WideLayout, lang: str) -> tuple[str, str]:
-    """Nazwy kolumn po odwróceniu: (kolumna z datą, kolumna z wartością)."""
+    """Column names after unpivoting: (date column, value column)."""
     return t("col_name_date", lang), t("col_name_value", lang)
 
 
 def unpivot(raw: pd.DataFrame, layout: WideLayout, lang: str) -> pd.DataFrame:
-    """Zamienia układ szeroki na długi (pandas, do podglądu w aplikacji).
+    """Unpivots a wide table into long format (pandas, for the in-app preview).
 
-    Puste komórki (brak pomiaru) są pomijane - dokładnie tak samo działa
-    Table.UnpivotOtherColumns w Power Query, więc liczba wierszy się zgadza.
+    Empty cells (no measurement) are dropped - exactly like Table.UnpivotOtherColumns
+    in Power Query, so row counts match.
     """
     date_col, value_col = column_names(layout, lang)
     data = raw.iloc[layout.data_start:].copy()
@@ -138,20 +136,20 @@ def unpivot(raw: pd.DataFrame, layout: WideLayout, lang: str) -> pd.DataFrame:
 
 
 def wide_to_m(layout: WideLayout, lang: str, source_name: str) -> list[tuple[str, str]]:
-    """Kroki M, które robią w Power BI to samo co unpivot().
+    """M steps that do in Power BI what unpivot() does in pandas.
 
-    Zwraca listę (nazwa kroku, wyrażenie). Wyrażenia odwołują się do kroku
-    źródłowego po nazwie (source_name), a kolejne kroki - do poprzedniego.
+    Returns a list of (step name, expression). The first expressions refer to the
+    source step by name (source_name), later ones to the previous step.
     """
-    from cleaning import m_name, m_text   # import tutaj, żeby uniknąć importu cyklicznego
+    from cleaning import m_name, m_text   # local import avoids a circular import
 
     date_col, value_col = column_names(layout, lang)
     src = m_name(source_name)
     keys, body, renamed, unpivoted = (t("m_wide_keys", lang), t("m_wide_data", lang),
                                       t("m_wide_renamed", lang), t("m_wide_unpivoted", lang))
     steps = [
-        # Klucze bierzemy z pliku (a nie wpisujemy na sztywno), więc ten sam kod
-        # zadziała dla pliku z innego roku, nawet jeśli zmieni się lista stacji.
+        # Keys are read from the file (not hard-coded), so the same code works for
+        # other years even if the list of stations changes.
         (keys, f"List.Skip(Record.ToList({src}{{{layout.key_row}}}), 1)"),
         (body, f"Table.Skip({src}, {layout.data_start})"),
         (renamed, f"Table.RenameColumns({m_name(body)}, "
@@ -168,27 +166,27 @@ def wide_to_m(layout: WideLayout, lang: str, source_name: str) -> list[tuple[str
     steps.append((t("m_types", lang),
                   f"Table.TransformColumnTypes({m_name(prev)}, {{{{{m_text(date_col)}, type date}}, "
                   f"{{{m_text(layout.key_label)}, type text}}, {{{m_text(value_col)}, type number}}}}"
-                  # Tekst "3,878" zamieni się na liczbę tylko z polskimi ustawieniami regionalnymi.
+                  # "3,878" converts to a number only with the Polish locale.
                   + (', "pl-PL")' if layout.decimal_comma else ")")))
     return steps
 
 
 # =============================================================================
-# Słownik kodów (np. metadane stacji)
+# Code dictionary (e.g. station metadata)
 # =============================================================================
 @dataclass
 class LookupResult:
-    total: int                      # ile różnych kodów jest w danych
-    matched: int                    # ile znaleziono w słowniku
-    old_code_mapping: dict          # stary kod -> aktualny kod
-    unmatched: list[str]            # kody, których nie ma nigdzie
+    total: int                      # distinct codes in the data
+    matched: int                    # codes found in the dictionary
+    old_code_mapping: dict          # old code -> current code
+    unmatched: list[str]            # codes found nowhere
 
 
 def check_codes(codes: pd.Series, current: pd.Series, old: pd.Series | None = None) -> LookupResult:
-    """Sprawdza, które kody z danych występują w słowniku.
+    """Checks which codes in the data exist in the dictionary.
 
-    Jeśli podamy kolumnę ze starymi kodami, kody nieznalezione wśród aktualnych
-    próbujemy dopasować po starym kodzie (GIOŚ z czasem zmieniał kody stacji).
+    If an old-code column is given, codes missing from the current ones are matched
+    through it (GIOŚ has renamed stations over the years).
     """
     unique = set(codes.dropna().astype(str).str.strip())
     current_set = set(current.dropna().astype(str).str.strip())

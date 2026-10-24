@@ -1,16 +1,15 @@
 """
-Tłumaczenia interfejsu (angielski / polski).
+Interface texts in English and Polish.
 
-Każdy tekst ma klucz, np. "app_title", i wersję w dwóch językach.
-Funkcja t("app_title", "en") zwraca tekst w wybranym języku.
-Teksty mogą mieć "dziury" w nawiasach klamrowych, np. {n},
-które wypełniamy wartościami: t("rows_removed", "pl", n=6).
+Each text has a key (e.g. "app_title") and a version in both languages.
+t("app_title", "en") returns the text in the selected language.
+Texts may contain {placeholders} filled in by keyword: t("rows_removed", "pl", n=6).
 """
 
 LANGUAGES = {"en": "English", "pl": "Polski"}
 
 TEXTS: dict[str, dict[str, str]] = {
-    # --- Aplikacja ---------------------------------------------------------
+    # --- App ------------------------------------------------------------------
     "app_title": {"en": "Data Assistant for Power BI", "pl": "Asystent danych dla Power BI"},
     "app_caption": {
         "en": "Upload a CSV or Excel file to see what needs fixing before you load it into Power BI. "
@@ -35,7 +34,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "sep_|": {"en": "pipe", "pl": "kreska"},
     "preview_raw": {"en": "Data preview (first 20 rows)", "pl": "Podgląd danych (pierwsze 20 wierszy)"},
 
-    # --- Raport jakości -------------------------------------------------------
+    # --- Quality report -------------------------------------------------------
     "metric_rows": {"en": "Rows", "pl": "Wiersze"},
     "metric_columns": {"en": "Columns", "pl": "Kolumny"},
     "metric_duplicates": {"en": "Duplicate rows", "pl": "Zduplikowane wiersze"},
@@ -60,7 +59,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "report_col_type": {"en": "type", "pl": "typ"},
     "report_col_issue": {"en": "issue", "pl": "problem"},
 
-    # --- Typy danych ------------------------------------------------------------
+    # --- Data types -----------------------------------------------------------
     "type_integer": {"en": "integer", "pl": "liczba całkowita"},
     "type_decimal_comma": {"en": "decimal (comma)", "pl": "liczba (przecinek)"},
     "type_decimal_dot": {"en": "decimal (dot)", "pl": "liczba (kropka)"},
@@ -73,8 +72,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "type_text": {"en": "text", "pl": "tekst"},
     "type_empty": {"en": "empty", "pl": "pusta"},
 
-    # --- Komunikaty o problemach ----------------------------------------------
-    # Formuła "Opis: liczba" omija polską odmianę ("1 wartość ma" / "5 wartości ma").
+    # --- Issue messages -------------------------------------------------------
+    # The "Description: count" form avoids Polish plural forms ("1 wartość ma" / "5 wartości ma").
     "issue_missing": {"en": "Missing values: {pct}", "pl": "Braki danych: {pct}"},
     "issue_placeholders": {
         "en": "Missing data written as a word: {n} (e.g. {examples})",
@@ -113,7 +112,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "pl": "Różne formaty zapisu NIP ({n}): {formats}",
     },
 
-    # --- Plan czyszczenia -------------------------------------------------------
+    # --- Cleaning plan --------------------------------------------------------
     "plan_header": {"en": "Cleaning plan", "pl": "Plan czyszczenia"},
     "plan_caption": {
         "en": "Select the steps you want to apply. The preview and the Power Query code update automatically.",
@@ -166,14 +165,14 @@ TEXTS: dict[str, dict[str, str]] = {
         "pl": "W surowych danych jest {n} duplikatów. Usuwamy je na końcu, bo po czyszczeniu może ich być więcej.",
     },
 
-    # --- Podgląd -----------------------------------------------------------------
+    # --- Preview --------------------------------------------------------------
     "preview_header": {"en": "Preview: before and after", "pl": "Podgląd: przed i po"},
     "rows_before": {"en": "Rows before", "pl": "Wiersze przed"},
     "rows_after": {"en": "Rows after", "pl": "Wiersze po"},
     "tab_before": {"en": "Before cleaning", "pl": "Przed czyszczeniem"},
     "tab_after": {"en": "After cleaning", "pl": "Po czyszczeniu"},
 
-    # --- Kod Power Query ----------------------------------------------------------
+    # --- Kod Power Query ------------------------------------------------------
     "code_header": {"en": "Power Query code", "pl": "Kod Power Query"},
     "path_label": {"en": "File path on the computer running Power BI", "pl": "Ścieżka do pliku na komputerze z Power BI"},
     "path_help": {
@@ -199,7 +198,7 @@ TEXTS: dict[str, dict[str, str]] = {
               "czyszczenie wykona się samo.",
     },
 
-    # --- Nazwy kroków w kodzie M --------------------------------------------------
+    # --- Step names in M code -------------------------------------------------
     "m_source": {"en": "Source", "pl": "Źródło"},
     "m_headers": {"en": "Promoted headers", "pl": "Nagłówki"},
     "m_trim": {"en": "Trimmed text", "pl": "Usunięte spacje"},
@@ -220,11 +219,11 @@ TEXTS: dict[str, dict[str, str]] = {
     "m_added": {"en": "Added: {col}", "pl": "Dodano: {col}"},
     "m_types": {"en": "Changed types", "pl": "Typy danych"},
 
-    # --- Typy natywne (kolumny, które już mają typ, np. z Excela) ---------------
+    # --- Native types (columns that already have a type, e.g. from Excel) -----
     "type_number_native": {"en": "number", "pl": "liczba"},
     "type_date_native": {"en": "date", "pl": "data"},
 
-    # --- Układ szeroki (unpivot) ---------------------------------------------------
+    # --- Wide layout (unpivot) ------------------------------------------------
     "col_name_date": {"en": "Date", "pl": "Data"},
     "col_name_value": {"en": "Value", "pl": "Wartość"},
     "wide_detected": {
@@ -245,7 +244,7 @@ TEXTS: dict[str, dict[str, str]] = {
               "więc liczba wierszy się zgadza. Stałe wiersze nagłówka zostają jako kolumny: {constants}.",
     },
 
-    # --- Słownik kodów -------------------------------------------------------------
+    # --- Code dictionary ------------------------------------------------------
     "dict_header": {"en": "Check codes against a dictionary (optional)", "pl": "Sprawdź kody w słowniku (opcjonalnie)"},
     "dict_caption": {
         "en": "Upload a reference file (e.g. station metadata) to check that every code in your data can be matched. "
@@ -282,13 +281,13 @@ TEXTS: dict[str, dict[str, str]] = {
 
 
 def t(key: str, lang: str, /, **params) -> str:
-    """Zwraca tekst w wybranym języku i wstawia parametry w miejsca {nazwa}."""
+    """Returns the text in the selected language with {placeholders} filled in."""
     text = TEXTS[key][lang]
     return text.format(**params) if params else text
 
 
 def issues_count(n: int, lang: str) -> str:
-    """'1 issue' / '3 issues' albo polska odmiana: 1 problem, 2 problemy, 5 problemów."""
+    """'1 issue' / '3 issues', or Polish plural forms: 1 problem, 2 problemy, 5 problemów."""
     if lang == "en":
         return f"{n} issue" if n == 1 else f"{n} issues"
     if n == 1:

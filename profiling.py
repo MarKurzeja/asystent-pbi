@@ -1,11 +1,11 @@
 """
-Profilowanie danych: dla każdej kolumny sprawdzamy, co w niej jest
-i jakie ma problemy. Tu NIE ma żadnego AI - to zwykła, przewidywalna logika.
+Data profiling: detects the type and quality issues of every column.
+Plain, deterministic rules - no AI.
 
-Najważniejsza funkcja: profile_dataframe(df) -> DatasetProfile
+Main entry point: profile_dataframe(df) -> DatasetProfile
 
-Problemy zapisujemy jako Issue(klucz, parametry), a nie gotowy tekst.
-Dzięki temu ten sam raport można pokazać po angielsku i po polsku (patrz i18n.py).
+Issues are stored as Issue(key, params) rather than finished text,
+so the same report can be rendered in English or Polish (see i18n.py).
 """
 
 import re
@@ -16,11 +16,11 @@ import pandas as pd
 
 from i18n import t
 
-# --- Wzorce wartości ---------------------------------------------------------
-# Każdy wzorzec to (identyfikator typu, wyrażenie regularne). Sprawdzamy,
-# jaki procent wartości w kolumnie pasuje do danego wzorca.
-# Spacja albo twarda spacja (separator tysięcy). Bez litery r przed cudzysłowem,
-# żeby Python sam zamienił   na znak - pyarrow nie rozumie zapisu  .
+# --- Value patterns -----------------------------------------------------------
+# Each pattern maps a type id to a regex. A column's type is the pattern
+# matched by the largest share of its values.
+# A regular or non-breaking space (thousands separator). The non-breaking space is
+# typed as a literal character, because pyarrow rejects the \u00a0 escape in patterns.
 THOUSANDS_SEP = "[  ]"
 
 PATTERNS = {
@@ -36,10 +36,10 @@ PATTERNS = {
 DATE_TYPES = {"date_dot", "date_iso", "date_slash"}
 NUMBER_TYPES = {"integer", "decimal_comma", "decimal_dot"}
 
-# Próg: od ilu % pasujących wartości uznajemy, że kolumna "jest" danego typu.
+# Minimum share of matching values for a column to be assigned a type.
 TYPE_THRESHOLD = 0.8
 
-# Słowa i znaki, którymi ludzie w plikach oznaczają brak danych.
+# Words and symbols commonly used for missing values.
 MISSING_PLACEHOLDERS = {"brak", "-", "--", "n/a", "null", "none", "nan", "b.d.", "bd", "?"}
 
 NIP_WEIGHTS = (6, 5, 7, 2, 3, 4, 5, 6, 7)
@@ -47,12 +47,12 @@ NIP_WEIGHTS = (6, 5, 7, 2, 3, 4, 5, 6, 7)
 
 @dataclass
 class Issue:
-    key: str                                    # klucz tekstu w i18n.py, np. "issue_spaces"
-    params: dict = field(default_factory=dict)  # wartości do wstawienia w tekst
+    key: str                                    # text key in i18n.py, e.g. "issue_spaces"
+    params: dict = field(default_factory=dict)  # values inserted into the text
 
     def render(self, lang: str) -> str:
         params = dict(self.params)
-        # Nazwy typów i listy formatów też tłumaczymy.
+        # Type names and format lists are translated too.
         if "type" in params:
             params["type"] = t("type_" + params["type"], lang)
         if self.key == "issue_mixed_dates":
@@ -63,8 +63,8 @@ class Issue:
 @dataclass
 class ColumnProfile:
     name: str
-    detected_type: str             # identyfikator, np. "decimal_comma"
-    type_match_pct: float          # jaki % niepustych wartości pasuje do typu
+    detected_type: str             # type id, e.g. "decimal_comma"
+    type_match_pct: float          # share of non-empty values matching the type
     missing_pct: float
     unique_count: int
     sample_values: list[str]
@@ -83,13 +83,13 @@ class DatasetProfile:
         return sum(len(c.issues) for c in self.columns) + (1 if self.duplicate_rows else 0)
 
 
-# --- Funkcje pomocnicze -------------------------------------------------------
+# --- Helpers ------------------------------------------------------------------
 def is_valid_nip(value: str) -> bool:
-    """Sprawdza, czy NIP jest poprawny (długość i cyfra kontrolna).
+    """Validates a Polish NIP (tax ID): length and check digit.
 
-    Akceptuje zapisy z myślnikami, spacjami i prefiksem PL, np. "123-456-32-18".
+    Accepts dashes, spaces and the PL prefix, e.g. "123-456-32-18".
     """
-    digits = re.sub(r"\D", "", str(value))  # zostawiamy same cyfry
+    digits = re.sub(r"\D", "", str(value))  # keep digits only
     if len(digits) != 10:
         return False
     checksum = sum(int(d) * w for d, w in zip(digits, NIP_WEIGHTS)) % 11
@@ -97,20 +97,20 @@ def is_valid_nip(value: str) -> bool:
 
 
 def _match_shares(values: pd.Series) -> dict[str, float]:
-    """Dla każdego wzorca: jaki ułamek wartości do niego pasuje."""
+    """Share of values matching each pattern."""
     return {name: values.str.match(pattern).mean() for name, pattern in PATTERNS.items()}
 
 
 def normalize_text(value: str) -> str:
-    """'  KRAKÓW ' -> 'krakow'. Służy do wykrywania wariantów tej samej wartości."""
+    """'  KRAKÓW ' -> 'krakow'. Used to detect spelling variants of the same value."""
     value = value.strip().lower()
-    value = value.replace("ł", "l")  # "ł" nie rozkłada się przez NFKD, więc ręcznie
+    value = value.replace("ł", "l")  # NFKD does not decompose "ł", so replace it manually
     value = unicodedata.normalize("NFKD", value)
     return "".join(ch for ch in value if not unicodedata.combining(ch))
 
 
 def to_number(values: pd.Series, number_type: str) -> pd.Series:
-    """Zamienia tekst na liczby zgodnie z wykrytym formatem."""
+    """Converts text to numbers according to the detected format."""
     cleaned = values.str.replace(THOUSANDS_SEP, "", regex=True)
     if number_type == "decimal_comma":
         cleaned = cleaned.str.replace(",", ".", regex=False)
@@ -121,12 +121,11 @@ def _examples(values: pd.Series, k: int = 3) -> str:
     return ", ".join(map(repr, values.unique()[:k]))
 
 
-# --- Profil jednej kolumny ------------------------------------------------------
+# --- Single column profile ----------------------------------------------------
 def _profile_native(series: pd.Series) -> ColumnProfile:
-    """Kolumna, która już ma prawdziwy typ (liczby lub daty, np. z Excela).
+    """Profiles a column that already has a real type (numbers or dates, e.g. from Excel).
 
-    Tu nie ma czego rozpoznawać z tekstu - sprawdzamy tylko braki,
-    wartości odstające i ujemne.
+    There is no text to parse - only missing values, outliers and negatives are checked.
     """
     total = len(series)
     values = series.dropna()
@@ -158,26 +157,26 @@ def profile_column(series: pd.Series) -> ColumnProfile:
     missing_pct = 1 - len(non_null) / total if total else 0.0
     issues: list[Issue] = []
 
-    # 0. Brak danych zapisany słowem ("brak", "-", "n/a"...)
+    # 0. Missing values written as words ("brak", "-", "n/a"...)
     is_placeholder = non_null.str.strip().str.lower().isin(MISSING_PLACEHOLDERS)
     if is_placeholder.any():
         issues.append(Issue("issue_placeholders",
                             {"n": int(is_placeholder.sum()), "examples": _examples(non_null[is_placeholder])}))
-        non_null = non_null[~is_placeholder]  # dalej analizujemy już bez nich
+        non_null = non_null[~is_placeholder]  # analyse the rest without them
 
     if non_null.empty:
         return ColumnProfile(series.name, "empty", 0.0, missing_pct, 0, [], [Issue("issue_empty_column")])
 
     stripped = non_null.str.strip()
 
-    # 1. Spacje na początku lub końcu
+    # 1. Leading/trailing spaces
     n_spaces = int((stripped != non_null).sum())
     if n_spaces:
         issues.append(Issue("issue_spaces", {"n": n_spaces}))
 
-    # 2. Wykrywanie typu
-    # Patrzymy na "rodziny" typów: kolumna z "12" i "12,50" to nadal kolumna
-    # liczbowa, a z "05.03.2024" i "2024-03-05" - nadal kolumna z datami.
+    # 2. Type detection
+    # Types are grouped into families: "12" and "12,50" are both numbers,
+    # "05.03.2024" and "2024-03-05" are both dates.
     shares = _match_shares(stripped)
     families = {"number": NUMBER_TYPES, "date": DATE_TYPES, "postcode": {"postcode"}, "email": {"email"}}
     family_masks = {
@@ -207,17 +206,17 @@ def profile_column(series: pd.Series) -> ColumnProfile:
     else:
         detected_type = best_family
 
-    # 3. Wartości niepasujące do wykrytego typu
+    # 3. Values that do not match the detected type
     if detected_type != "text" and best_share < 1:
         bad = stripped[~best_mask]
         issues.append(Issue("issue_type_mismatch",
                             {"type": detected_type, "n": len(bad), "examples": _examples(bad)}))
 
-    # 4. Liczby zapisane jako tekst z przecinkiem - Power BI ich sam nie rozpozna
+    # 4. Decimal-comma numbers - Power BI will not detect them on its own
     if detected_type == "decimal_comma":
         issues.append(Issue("issue_comma_decimal"))
 
-    # 5. Wartości odstające (metoda IQR) dla kolumn liczbowych
+    # 5. Outliers (IQR method) in numeric columns
     if detected_type in NUMBER_TYPES:
         nums = to_number(stripped, detected_type).dropna()
         if len(nums) >= 8:
@@ -229,7 +228,7 @@ def profile_column(series: pd.Series) -> ColumnProfile:
         if (nums < 0).any():
             issues.append(Issue("issue_negatives", {"n": int((nums < 0).sum())}))
 
-    # 6. Warianty tej samej wartości ("Kraków", "krakow", "KRAKÓW ")
+    # 6. Spelling variants ("Kraków", "krakow", "KRAKÓW ")
     if detected_type == "text" and stripped.nunique() <= 200:
         groups = non_null.groupby(non_null.map(normalize_text)).unique()
         variants = [list(v) for v in groups if len(v) > 1]
@@ -237,7 +236,7 @@ def profile_column(series: pd.Series) -> ColumnProfile:
             examples = " / ".join(map(repr, variants[0][:4]))
             issues.append(Issue("issue_variants", {"n": len(variants), "examples": examples}))
 
-    # 7. NIP - sprawdzamy cyfrę kontrolną (w kolumnach, które mają "nip" w nazwie)
+    # 7. NIP check digit (columns with "nip" in the name)
     if "nip" in str(series.name).lower():
         invalid = stripped[~stripped.map(is_valid_nip)]
         if len(invalid):
@@ -257,7 +256,7 @@ def profile_column(series: pd.Series) -> ColumnProfile:
     )
 
 
-# --- Profil całej tabeli ------------------------------------------------------
+# --- Whole table profile ------------------------------------------------------
 def profile_dataframe(df: pd.DataFrame) -> DatasetProfile:
     columns = [profile_column(df[col]) for col in df.columns]
     for col in columns:

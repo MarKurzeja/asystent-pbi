@@ -29,6 +29,21 @@ over the years: in the 2019 PM10 file, 16 of 179 station codes are missing from 
 6 can be matched through the *old code* column, 10 cannot be matched at all. Without this check those
 measurements would silently disappear when filtering by city in Power BI.
 
+## Project structure
+
+| File | Purpose |
+|---|---|
+| `app.py` | user interface (Streamlit) |
+| `loading.py` | file loading, encoding and separator detection |
+| `profiling.py` | column profiling and data quality rules |
+| `cleaning.py` | cleaning steps (pandas) and Power Query code generation (M) |
+| `reshape.py` | wide-layout detection, unpivot and dictionary (lookup) checks |
+| `i18n.py` | English and Polish texts |
+| `tests/` | automated tests (pytest) |
+| `data/generate_test_data.py` | generator of messy test data |
+| `smog.pbix` | Power BI dashboard (GIOŚ air quality data) |
+| `docs/` | dashboard screenshots and PDF |
+
 ## Result in Power BI
 
 The generated code runs in Power BI Desktop without errors - every column passes the *Column quality* check
@@ -145,19 +160,6 @@ the `PM10_24g`, `PM25_24g` and `BaP(PM10)_24g` files plus the station metadata i
   US-style month/day dates are not supported - `03/05/2025` cannot be told apart from 3 May.
 - Wide-layout detection works for Excel files whose first column contains dates.
 
-## Project structure
-
-| File | Purpose |
-|---|---|
-| `app.py` | user interface (Streamlit) |
-| `loading.py` | file loading, encoding and separator detection |
-| `profiling.py` | column profiling and data quality rules |
-| `cleaning.py` | cleaning steps (pandas) and Power Query code generation (M) |
-| `reshape.py` | wide-layout detection, unpivot and dictionary (lookup) checks |
-| `i18n.py` | English and Polish texts |
-| `tests/` | automated tests (pytest) |
-| `data/generate_test_data.py` | generator of messy test data |
-
 ## Roadmap
 
 - [x] Data quality report with Polish-specific rules
@@ -173,21 +175,91 @@ the `PM10_24g`, `PM25_24g` and `BaP(PM10)_24g` files plus the station metadata i
 
 ## 🇵🇱 Wersja polska
 
-**Asystent danych dla Power BI** wykrywa problemy z jakością danych, proponuje plan czyszczenia
-i generuje gotowy kod Power Query. Szczególny nacisk położony jest na polskie formaty danych:
-kodowanie Windows-1250, przecinek dziesiętny, daty `dd.mm.rrrr`, kody pocztowe, cyfrę kontrolną NIP
-oraz warianty nazw z polskimi znakami.
+**Asystent danych dla Power BI** to narzędzie, które przygotowuje „brudne” dane do Power BI: wykrywa problemy
+z jakością danych, proponuje plan czyszczenia i generuje gotowy kod Power Query (M). Powstało z myślą
+o polskich formatach danych: kodowaniu Windows-1250, przecinku dziesiętnym, datach `dd.mm.rrrr`, kodach
+pocztowych, cyfrze kontrolnej NIP i wariantach nazw z polskimi znakami (`Kraków` / `krakow` / `KRAKÓW`).
+Interfejs jest dostępny po polsku i po angielsku.
 
-Kod wygenerowany przez aplikację został przetestowany w Power BI Desktop: wszystkie kolumny
-przechodzą kontrolę *Column quality* z wynikiem **0% błędów**.
+### Jak to działa
 
-Na danych GIOŚ (ok. 960 tys. pomiarów z 296 stacji, lata 2018-2024) powstał **dashboard Power BI**
-o jakości powietrza w polskich miastach. Najważniejszy wniosek: w Krakowie liczba dni z przekroczeniem
-normy PM10 spadła o ok. 72%, ale średnia dla całej Polski spadła w podobnym stopniu, a wiele miast
-poprawiło się jeszcze bardziej.
+1. **Wczytanie** pliku CSV lub Excel. Kodowanie i separator są wykrywane automatycznie.
+2. **Raport jakości**: dla każdej kolumny wykryty typ, braki danych, liczba unikalnych wartości i lista problemów.
+3. **Plan czyszczenia**: proponowane kroki do zaznaczenia oraz podgląd danych przed i po.
+4. **Kod Power Query**: wklejasz go w Power BI (*Pobierz dane → Puste zapytanie → Edytor zaawansowany*).
+   Od tej chwili Power BI czyści każdą nową wersję pliku przy odświeżeniu.
 
-Analiza „przed i po” zakazie palenia węglem (sezon grzewczy, Kraków vs reszta Polski) pokazuje, że PM10
-spadło w Krakowie o 30%, a w reszcie kraju o 28%. Szacowany efekt samego zakazu to więc tylko ok. 2,6 punktu
-procentowego. Rekomendacja: oceniać takie polityki przez porównanie z grupą kontrolną, a nie tylko z rokiem bazowym.
+Aplikacja obsługuje też pliki w **układzie szerokim** z nagłówkiem na kilka wierszy (tak publikuje dane m.in.
+GIOŚ): sama odwraca tabelę do układu „długiego” i generuje odpowiednie kroki Power Query. Potrafi również
+**sprawdzić kody ze słownikiem**, np. z metadanymi stacji. GIOŚ z czasem zmieniał kody stacji: w pliku PM10
+z 2019 r. 16 ze 179 kodów nie występuje w aktualnych metadanych. 6 z nich da się dopasować po starym kodzie,
+a 10 nie ma nigdzie. Bez tej kontroli te pomiary po cichu znikałyby przy filtrowaniu po mieście.
 
-Instrukcja uruchomienia, zrzuty dashboardu i opis plików znajdują się w części angielskiej powyżej.
+Wygenerowany kod został przetestowany w Power BI Desktop: wszystkie kolumny przechodzą kontrolę
+*Column quality* z wynikiem **0% błędów**.
+
+### Dashboard Power BI: jakość powietrza w polskich miastach (GIOŚ, 2018-2024)
+
+Za pomocą aplikacji przygotowałam **ok. 960 tys. dobowych pomiarów z 296 stacji** (PM10, PM2.5
+i benzo(a)piren). Dashboard ([`smog.pbix`](smog.pbix), wersja PDF: [docs/smog-dashboard.pdf](docs/smog-dashboard.pdf))
+ma pięć stron, a miasto i rok wybiera się filtrami, więc każda strona działa dla dowolnego miasta:
+
+1. **Przegląd**: średnie PM10, liczba dni ponad normą, zmiana względem 2018 r., benzo(a)piren i sezonowość.
+2. **Na tle Polski**: wybrane miasto na tle średniej krajowej i ranking poprawy miast.
+3. **Czy zakaz zadziałał?**: analiza „przed i po” z grupą kontrolną (opis niżej).
+4. **Mapa stacji**: stacje w wybranym mieście i liczba dni ponad normą na każdej z nich.
+5. **Jakość danych**: co trzeba było poprawić w danych źródłowych i co wykryła aplikacja.
+
+### Analiza: czy zakaz palenia węglem w Krakowie zadziałał?
+
+**Pytanie.** Czy zakaz palenia węglem i drewnem w Krakowie (od września 2019 r.) poprawił jakość powietrza
+bardziej niż w reszcie Polski?
+
+**Metoda.** Średnie PM10 w **sezonie grzewczym** (październik–marzec, bo wtedy zakaz ma znaczenie) **przed
+i po zakazie**, w Krakowie i w pozostałych miastach. Różnica między tymi dwiema zmianami to szacowany efekt
+zakazu (uproszczona metoda *difference-in-differences*, z resztą Polski jako grupą kontrolną).
+
+| PM10 w sezonie grzewczym (µg/m³) | Przed zakazem | Po zakazie | Zmiana |
+|---|---|---|---|
+| Kraków | 50 | 35 | **-30%** |
+| Reszta Polski | 39 | 28 | **-28%** |
+| **Szacowany efekt zakazu** | | | **ok. -2,6 punktu procentowego** |
+
+**Interpretacja.** Kraków poprawił się tylko nieco bardziej niż reszta kraju, więc w danych z lat 2018-2024
+nie widać dużego, dodatkowego efektu samego zakazu. Wymiana pieców w Krakowie trwała wiele lat przed 2019 r.,
+więc znaczna część poprawy mogła nastąpić przed początkiem danych. Podobny spadek w całej Polsce wskazuje też
+na czynniki wspólne: pogodę i programy ogólnokrajowe.
+
+**Ograniczenia.** Tylko ok. 1,5 sezonu grzewczego przed zakazem, zmieniający się zestaw stacji, brak danych pogodowych.
+
+**Rekomendacje**
+- **Oceniać politykę przez porównanie z grupą kontrolną, a nie tylko z rokiem bazowym.** Spadek dni smogowych
+  o 72% wyglądał na duży sukces zakazu, ale większość tej zmiany wystąpiła też w innych miastach.
+- **Kraków nadal ma zimą ok. 25% wyższe PM10 niż reszta Polski.** Kolejne działania warto skierować na transport
+  i przemysł: najgorszą stacją w 2024 r. była ul. Bulwarowa w Nowej Hucie.
+- **Benzo(a)piren wciąż przekracza normę 1 ng/m³ (1,11 ng/m³ w 2024 r.).** Warto zbadać napływ zanieczyszczeń
+  z gmin wokół Krakowa, gdzie zakaz nie obowiązuje.
+
+### Najważniejsze wnioski (Kraków)
+
+- Liczba dni z przekroczeniem dobowej normy PM10 (50 µg/m³) spadła z ok. 76 w 2018 r. do ok. 21 w 2024 r. (-72%).
+  Od 2022 r. Kraków mieści się w unijnym limicie 35 dni w roku.
+- Średnia dla całej Polski spadła w podobnym stopniu, a wiele miast poprawiło się jeszcze bardziej
+  (Elbląg -95%, Warszawa -89%, Katowice -81%).
+- Jakość powietrza wyraźnie zależy od **sezonu grzewczego**: zimą średnie PM10 jest mniej więcej dwa razy wyższe niż latem.
+
+### Uruchomienie
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+python data/generate_test_data.py  # tworzy celowo „brudny” plik testowy
+streamlit run app.py               # otwiera aplikację w przeglądarce
+python -m pytest                   # uruchamia testy automatyczne
+```
+
+Surowe pliki GIOŚ nie są przechowywane w repozytorium (są duże). Archiwa roczne można pobrać ze strony
+[powietrze.gios.gov.pl/pjp/archives](https://powietrze.gios.gov.pl/pjp/archives), rozpakować i umieścić pliki
+`PM10_24g`, `PM25_24g` i `BaP(PM10)_24g` oraz metadane stacji w folderze `data/gios/`.

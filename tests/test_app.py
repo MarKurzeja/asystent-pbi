@@ -1,9 +1,8 @@
 """
-Testy automatyczne. Uruchom w terminalu:
+Automated tests. Run:
     python -m pytest
 
-Każdy test sprawdza jedną rzecz. Jeśli po zmianie w kodzie któryś test
-przestanie przechodzić, od razu wiesz, co się zepsuło.
+Each test checks one behaviour, so a failing test points straight to what broke.
 """
 
 import sys
@@ -11,7 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
-# Pozwala zaimportować moduły z głównego folderu projektu.
+# Allow importing modules from the project root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cleaning import apply_steps, steps_to_m, suggest_steps  # noqa: E402
@@ -22,7 +21,7 @@ from profiling import is_valid_nip, profile_column, profile_dataframe  # noqa: E
 DATA = Path(__file__).resolve().parent.parent / "data" / "zamowienia_brudne.csv"
 
 
-# --- NIP ---------------------------------------------------------------------
+# --- NIP ----------------------------------------------------------------------
 def test_valid_nip_in_different_formats():
     assert is_valid_nip("5260250274")
     assert is_valid_nip("526-025-02-74")
@@ -30,11 +29,11 @@ def test_valid_nip_in_different_formats():
 
 
 def test_invalid_nip():
-    assert not is_valid_nip("5260250275")   # zła cyfra kontrolna
-    assert not is_valid_nip("123")          # za krótki
+    assert not is_valid_nip("5260250275")   # wrong check digit
+    assert not is_valid_nip("123")          # too short
 
 
-# --- Tłumaczenia ----------------------------------------------------------------
+# --- Translations -------------------------------------------------------------
 def test_every_text_has_both_languages():
     for key, versions in TEXTS.items():
         assert set(versions) == {"en", "pl"}, key
@@ -50,7 +49,7 @@ def test_polish_plural():
     assert issues_count(2, "en") == "2 issues"
 
 
-# --- Wykrywanie typów -------------------------------------------------------------
+# --- Type detection -----------------------------------------------------------
 def test_detects_polish_decimal_comma():
     col = profile_column(pd.Series(["1 234,56", "12,50", "7,00"], name="kwota"))
     assert col.detected_type == "decimal_comma"
@@ -67,7 +66,7 @@ def test_placeholder_words_are_not_type_errors():
     assert any(i.key == "issue_placeholders" for i in col.issues)
 
 
-# --- Cały proces na pliku testowym ------------------------------------------------
+# --- End-to-end on the sample file --------------------------------------------
 def _load():
     result = load_file(DATA.read_bytes(), DATA.name)
     return result, profile_dataframe(result.df)
@@ -99,9 +98,9 @@ def test_power_query_code_in_both_languages():
     assert "Encoding=1250" in m_en
 
 
-# --- Układ szeroki (pliki w stylu GIOŚ) -------------------------------------------
+# --- Wide layout (GIOŚ-style files) -------------------------------------------
 def _wide_excel():
-    """Mały plik w układzie GIOŚ: 3 wiersze nagłówka, stacje w kolumnach."""
+    """Small GIOŚ-style file: 3 header rows, stations in columns."""
     import io
     from datetime import datetime
     rows = [
@@ -136,7 +135,7 @@ def test_unpivot_skips_empty_cells():
     result = _wide_excel()
     long = unpivot(result.raw, detect_wide_layout(result.raw), "pl")
     assert list(long.columns) == ["Data", "Kod stacji", "Wartość", "Wskaźnik", "Jednostka"]
-    assert len(long) == 7                     # 8 komórek, jedna pusta
+    assert len(long) == 7                     # 8 cells, one empty
     assert long["Wskaźnik"].eq("PM10").all()
 
 
@@ -160,13 +159,13 @@ def test_wide_power_query_code():
 
 
 def test_text_parameter_named_key():
-    # Regresja: tekst z parametrem {key} (np. "Kod stacji") nie może psuć funkcji t().
+    # Regression: a {key} placeholder (e.g. "Kod stacji") must not break t().
     from i18n import t
     assert "Kod stacji" in t("wide_unpivot_label", "pl", key="Kod stacji")
 
 
 def test_wide_layout_with_comma_numbers_as_text():
-    # GIOŚ w części plików z 2018 r. zapisywał wartości jako tekst z przecinkiem.
+    # Some 2018 GIOŚ files store values as text with a decimal comma.
     import io
     from datetime import datetime
     from reshape import detect_wide_layout, unpivot
@@ -189,7 +188,7 @@ def test_wide_layout_with_comma_numbers_as_text():
 
 
 def test_excel_with_numeric_headers():
-    # Regresja: Excel, którego nagłówki to liczby (1, 2, 3), nie może wywracać aplikacji.
+    # Regression: an Excel file with numeric headers (1, 2, 3) must not crash the app.
     import io
     buf = io.BytesIO()
     pd.DataFrame({1: ["a", "b"], 2: ["1,5", "2,5"]}).to_excel(buf, index=False)

@@ -1,11 +1,10 @@
 """
-Kroki czyszczenia danych i generowanie kodu Power Query (M).
+Cleaning steps and Power Query (M) code generation.
 
-Każdy krok ma dwie "twarze":
-- wersję w pandas (apply_steps)  -> podgląd "przed i po" w aplikacji,
-- wersję w języku M (steps_to_m) -> kod, który Power BI wykona na oryginalnym pliku.
-Obie wersje robią dokładnie to samo, więc to, co widzisz w podglądzie,
-dostaniesz potem w Power BI.
+Each step has two implementations:
+- pandas (apply_steps)  -> the before/after preview in the app,
+- M (steps_to_m)        -> the code Power BI runs on the original file.
+Both do exactly the same thing, so the preview matches the Power BI result.
 """
 
 from dataclasses import dataclass, field
@@ -16,22 +15,22 @@ from i18n import t
 from profiling import (DATE_TYPES, MISSING_PLACEHOLDERS, NUMBER_TYPES,
                        DatasetProfile, normalize_text, to_number)
 
-# Kolejność, w jakiej kroki są wykonywane (niezależnie od kolejności zaznaczania).
+# Execution order of steps (independent of the order they were selected in).
 STEP_ORDER = ["trim", "nulls", "variants", "recode", "numbers", "dates", "nip", "duplicates"]
 
 
 @dataclass
 class Step:
-    kind: str                                   # rodzaj kroku, np. "trim", "dates"
+    kind: str                                   # step type, e.g. "trim", "dates"
     columns: list[str] = field(default_factory=list)
-    params: dict = field(default_factory=dict)  # ustawienia kroku, np. mapa zamian
+    params: dict = field(default_factory=dict)  # step settings, e.g. a replacement map
 
     @property
     def key(self) -> str:
-        """Unikalny identyfikator kroku (potrzebny dla checkboxów w Streamlit)."""
+        """Unique step id (used as the Streamlit checkbox key)."""
         return self.kind + ":" + ",".join(self.columns)
 
-    # --- Opisy kroków w wybranym języku ---
+    # --- Step descriptions in the selected language ---------------------------
     def label(self, lang: str) -> str:
         col = self.columns[0] if self.columns else ""
         if self.kind == "numbers":
@@ -58,22 +57,22 @@ def _text_columns(df: pd.DataFrame) -> list[str]:
 
 
 # =============================================================================
-# 1. PROPONOWANIE KROKÓW
+# 1. SUGGESTING STEPS
 # =============================================================================
 def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
-    """Na podstawie profilu danych proponuje listę kroków czyszczenia."""
+    """Suggests cleaning steps based on the data profile."""
     steps: list[Step] = []
     text_cols = _text_columns(df)
     by_name = {c.name: c for c in profile.columns}
 
-    # Zbędne spacje
+    # Leading/trailing spaces
     trim_cols = [col for col in text_cols
                  if (df[col].dropna() != df[col].dropna().str.strip()).any()]
     if trim_cols:
         steps.append(Step("trim", trim_cols))
 
-    # Puste komórki i "brak" -> null. Proponujemy tylko, gdy jest co zamieniać:
-    # puste komórki (w CSV Power BI wczyta je jako pusty tekst) albo słowa typu "brak".
+    # Blank cells and placeholders like "brak" -> null. Suggested only when there is something
+    # to replace (Power BI reads blank CSV cells as empty text, not null).
     def _has_blanks(col: str) -> bool:
         s = df[col]
         return bool(s.isna().any() or s.dropna().str.strip().str.lower().isin(MISSING_PLACEHOLDERS).any())
@@ -88,18 +87,18 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
         values = df[col].dropna().str.strip()
         values = values[~values.str.lower().isin(MISSING_PLACEHOLDERS)]
 
-        # Warianty tej samej wartości ("Kraków" / "krakow" / "KRAKÓW")
+        # Spelling variants of the same value ("Kraków" / "krakow" / "KRAKÓW")
         if info.detected_type == "text" and "nip" not in str(col).lower() and 0 < values.nunique() <= 200:
             mapping = {}
             for _, group in values.groupby(values.map(normalize_text)):
                 counts = group.value_counts()
                 if len(counts) > 1:
-                    canonical = counts.index[0]  # najczęstszy zapis wygrywa
+                    canonical = counts.index[0]  # the most frequent spelling wins
                     mapping.update({v: canonical for v in counts.index[1:]})
             if mapping:
                 steps.append(Step("variants", [col], {"mapping": mapping}))
 
-        # Liczby zapisane jako tekst
+        # Numbers stored as text
         if info.detected_type in NUMBER_TYPES:
             steps.append(Step("numbers", [col], {
                 "type": info.detected_type,
@@ -107,30 +106,30 @@ def suggest_steps(df: pd.DataFrame, profile: DatasetProfile) -> list[Step]:
                 "culture": "en-US" if info.detected_type == "decimal_dot" else "pl-PL",
             }))
 
-        # Daty
+        # Dates
         if info.detected_type in DATE_TYPES | {"date_mixed"}:
             steps.append(Step("dates", [col]))
 
-        # NIP - zostawiamy same cyfry
+        # NIP (Polish tax ID) - keep digits only
         if "nip" in str(col).lower():
             steps.append(Step("nip", [col]))
 
-    # Duplikaty
+    # Duplicate rows
     if profile.duplicate_rows:
         steps.append(Step("duplicates", params={"n": profile.duplicate_rows}))
 
-    # Pokazujemy kroki w tej samej kolejności, w jakiej będą wykonywane.
+    # Show steps in the order they will run.
     return sorted(steps, key=lambda s: STEP_ORDER.index(s.kind))
 
 
 # =============================================================================
-# 2. WYKONANIE KROKÓW W PANDAS (podgląd)
+# 2. APPLYING STEPS IN PANDAS (preview)
 # =============================================================================
 DATE_FORMATS = {".": "%d.%m.%Y", "/": "%d/%m/%Y", "-": "%Y-%m-%d"}
 
 
 def _parse_dates(s: pd.Series) -> pd.Series:
-    """Rozpoznaje format każdej daty po znaku, który ją dzieli (. / -)."""
+    """Detects the format of each date by its separator (. / -)."""
     text = s.str.strip()
     result = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
     for sep, fmt in DATE_FORMATS.items():
@@ -140,7 +139,7 @@ def _parse_dates(s: pd.Series) -> pd.Series:
 
 
 def apply_steps(df: pd.DataFrame, steps: list[Step]) -> pd.DataFrame:
-    """Wykonuje kroki na kopii danych i zwraca wyczyszczoną tabelę."""
+    """Applies the steps to a copy of the data and returns the cleaned table."""
     out = df.copy()
     for step in sorted(steps, key=lambda s: STEP_ORDER.index(s.kind)):
         for col in step.columns:
@@ -165,18 +164,18 @@ def apply_steps(df: pd.DataFrame, steps: list[Step]) -> pd.DataFrame:
 
 
 # =============================================================================
-# 3. GENEROWANIE KODU POWER QUERY (M)
+# 3. POWER QUERY (M) CODE GENERATION
 # =============================================================================
 ENCODING_CODES = {"utf-8-sig": 65001, "utf-8": 65001, "cp1250": 1250, "iso-8859-2": 28592}
 
 
 def m_text(value: str) -> str:
-    """Tekst w języku M: w cudzysłowie, a cudzysłów w środku podwajamy."""
+    """M text literal: quoted, with inner quotes doubled."""
     return '"' + str(value).replace('"', '""') + '"'
 
 
 def m_name(value: str) -> str:
-    """Nazwa kroku w M. Zapis #"..." pozwala na spacje i polskie znaki."""
+    """M step name. The #"..." syntax allows spaces and Polish characters."""
     return "#" + m_text(value)
 
 
@@ -187,17 +186,17 @@ def m_list(values) -> str:
 def steps_to_m(steps: list[Step], file_path: str, file_type: str,
                encoding: str | None, separator: str | None, lang: str = "pl",
                sheet_name: str | None = None, layout=None) -> str:
-    """Zamienia listę kroków na gotowe zapytanie Power Query.
+    """Turns the steps into a complete Power Query.
 
-    Parametr lang decyduje o języku nazw kroków widocznych w Power BI
-    (panel Applied Steps), np. "Bez duplikatów" albo "Removed duplicates".
+    `lang` sets the language of step names shown in Power BI (Applied Steps),
+    e.g. "Removed duplicates" or "Bez duplikatów".
     """
-    lines: list[tuple[str, str]] = []   # (nazwa kroku, wyrażenie)
+    lines: list[tuple[str, str]] = []   # (step name, expression)
 
-    # --- Źródło ---
+    # --- Source ---------------------------------------------------------------
     source, headers = t("m_source", lang), t("m_headers", lang)
     if file_type == "excel":
-        # Arkusz wybieramy po nazwie - pozycja {0} mogłaby wskazać np. nazwaną tabelę.
+        # Select the sheet by name - position {0} could point to a named table instead.
         item = f"{{[Item={m_text(sheet_name)}, Kind=\"Sheet\"]}}" if sheet_name else "{0}"
         lines.append((source, f"Excel.Workbook(File.Contents({m_text(file_path)}), null, true){item}[Data]"))
     else:
@@ -206,7 +205,7 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
         lines.append((source, f"Csv.Document(File.Contents({m_text(file_path)}), "
                               f"[Delimiter={delimiter}, Encoding={code}, QuoteStyle=QuoteStyle.Csv])"))
     if layout is not None:
-        # Układ szeroki: zamiast zwykłego nagłówka odwracamy tabelę (patrz reshape.py).
+        # Wide layout: unpivot instead of promoting headers (see reshape.py).
         from reshape import wide_to_m
         lines.extend(wide_to_m(layout, lang, source))
         prev = lines[-1][0]
@@ -219,7 +218,7 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
         lines.append((name, expr.replace("PREV", m_name(prev))))
         prev = name
 
-    # --- Kroki czyszczenia ---
+    # --- Cleaning steps -------------------------------------------------------
     for step in sorted(steps, key=lambda s: STEP_ORDER.index(s.kind)):
         col = step.columns[0] if step.columns else ""
 
@@ -265,6 +264,6 @@ def steps_to_m(steps: list[Step], file_path: str, file_type: str,
         elif step.kind == "duplicates":
             add(t("m_distinct", lang), "Table.Distinct(PREV)")
 
-    # --- Składanie całości ---
+    # --- Assemble the query ---------------------------------------------------
     body = ",\n".join(f"    {m_name(name)} = {expr}" for name, expr in lines)
     return f"let\n{body}\nin\n    {m_name(prev)}"
