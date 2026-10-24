@@ -40,6 +40,45 @@ Each cleaning step appears as a named step in *Applied Steps*:
 
 ![Applied steps](powerbi-kroki.png)
 
+## Power BI dashboard: air quality in Polish cities (GIOŚ, 2018-2024)
+
+The app was used to prepare **~960,000 daily measurements from 296 stations** (PM10, PM2.5 and
+benzo(a)pyrene) published by GIOŚ, the Polish Chief Inspectorate of Environmental Protection.
+The report is in [`smog.pbix`](smog.pbix) (Power BI Desktop), and all pages are also available as a
+[PDF](docs/smog-dashboard.pdf). City and year are selected with slicers, so every page works for any city.
+
+### 1. Overview
+![Overview page](docs/dashboard-overview.png)
+
+### 2. City vs national average
+![City vs Poland page](docs/dashboard-vs-poland.png)
+
+### 3. Station map
+![Station map page](docs/dashboard-map.png)
+
+### 4. Data quality
+![Data quality page](docs/dashboard-data-quality.png)
+
+### Key findings (Kraków)
+
+- **Days above the PM10 daily limit (50 µg/m³) fell from ~76 in 2018 to ~21 in 2024 (-72%).**
+  Since 2022 Kraków has stayed below the EU limit of 35 days per year.
+- **The national average fell by a similar proportion**, and many cities improved even more
+  (Elbląg -95%, Warszawa -89%, Katowice -81%). The 2019 ban on solid-fuel heating in Kraków was
+  probably not the only driver: weather and nationwide programmes matter too.
+- Air quality follows the **heating season**: monthly PM10 is roughly twice as high in winter as in summer.
+- In 2024 the worst station was **ul. Bulwarowa** (Nowa Huta, industrial district) with 30 days above the limit.
+- **Benzo(a)pyrene is still above the 1 ng/m³ target** (1.11 ng/m³ in 2024).
+
+### Data model and DAX
+
+- Star schema: `Pomiary` (fact table, measurements) with `Stacje` (stations) and `Kalendarz` (date table) as dimensions.
+- Power Query: one function (`fnGios`) loads every yearly file from a folder, unpivots it and maps
+  old station codes to current ones.
+- DAX measures: average per station (`AVERAGEX`), comparison with 2018 (`CALCULATE` + `REMOVEFILTERS`),
+  national benchmark that ignores the city filter, a dynamic page title (`SELECTEDVALUE`).
+- Comparisons return blank when one of the years has no data, so closed stations do not show a false "-100%".
+
 ## Design decisions
 
 - **Rules first, no black box.** Profiling and cleaning are plain, deterministic Python rules.
@@ -95,7 +134,8 @@ the `PM10_24g`, `PM25_24g` and `BaP(PM10)_24g` files plus the station metadata i
 - [x] Power Query code generation, tested in Power BI Desktop
 - [x] English and Polish interface
 - [x] Wide files with multi-row headers (unpivot) and dictionary checks
-- [ ] Power BI dashboard: air quality in Kraków vs other Polish cities (GIOŚ data, 2018-2024)
+- [x] Power BI dashboard: air quality in Kraków vs other Polish cities (GIOŚ data, 2018-2024)
+- [ ] Detection of duplicate keys and numeric missing-value codes (e.g. -999)
 - [ ] AI suggestions for additional cleaning steps (e.g. filling a missing city from the postcode)
 
 ---
@@ -110,4 +150,9 @@ oraz warianty nazw z polskimi znakami.
 Kod wygenerowany przez aplikację został przetestowany w Power BI Desktop: wszystkie kolumny
 przechodzą kontrolę *Column quality* z wynikiem **0% błędów**.
 
-Instrukcja uruchomienia i opis plików znajdują się w części angielskiej powyżej.
+Na danych GIOŚ (ok. 960 tys. pomiarów z 296 stacji, lata 2018-2024) powstał **dashboard Power BI**
+o jakości powietrza w polskich miastach. Najważniejszy wniosek: w Krakowie liczba dni z przekroczeniem
+normy PM10 spadła o ok. 72%, ale średnia dla całej Polski spadła w podobnym stopniu, a wiele miast
+poprawiło się jeszcze bardziej.
+
+Instrukcja uruchomienia, zrzuty dashboardu i opis plików znajdują się w części angielskiej powyżej.
