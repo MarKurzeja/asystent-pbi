@@ -67,7 +67,7 @@ effect of the ban - a simplified *difference-in-differences* design, with the re
 |---|---|---|---|
 | Kraków | 50 | 35 | **-30%** |
 | Rest of Poland | 39 | 28 | **-28%** |
-| **Estimated effect of the ban** | | | **≈ -3 percentage points** |
+| **Estimated effect of the ban** | | | **≈ -2.6 percentage points** |
 
 **Interpretation.** Kraków improved only slightly more than the rest of the country, so the 2018-2024 data
 shows no large additional effect of the ban itself. Kraków had been replacing coal stoves for years before
@@ -81,7 +81,7 @@ points to common factors as well: weather and nationwide programmes.
   a big success of the ban, but most of that change happened elsewhere too.
 - **Kraków still has ~25% higher winter PM10 than the rest of Poland.** Further action could target transport
   and industry - the worst station in 2024 was ul. Bulwarowa in Nowa Huta, the industrial district.
-- **Benzo(a)pyrene is still above the target value (1.11 ng/m³).** Pollution drifting in from municipalities
+- **Benzo(a)pyrene is still above the 1 ng/m³ target (1.11 ng/m³ in 2024).** Pollution drifting in from municipalities
   around Kraków, where the ban does not apply, is worth investigating.
 
 ### 4. Station map
@@ -187,7 +187,7 @@ normy PM10 spadła o ok. 72%, ale średnia dla całej Polski spadła w podobnym 
 poprawiło się jeszcze bardziej.
 
 Analiza „przed i po” zakazie palenia węglem (sezon grzewczy, Kraków vs reszta Polski) pokazuje, że PM10
-spadło w Krakowie o 30%, a w reszcie kraju o 28%. Szacowany efekt samego zakazu to więc tylko ok. 3 punkty
-procentowe. Rekomendacja: oceniać takie polityki przez porównanie z grupą kontrolną, a nie tylko z rokiem bazowym.
+spadło w Krakowie o 30%, a w reszcie kraju o 28%. Szacowany efekt samego zakazu to więc tylko ok. 2,6 punktu
+procentowego. Rekomendacja: oceniać takie polityki przez porównanie z grupą kontrolną, a nie tylko z rokiem bazowym.
 
 Instrukcja uruchomienia, zrzuty dashboardu i opis plików znajdują się w części angielskiej powyżej.
